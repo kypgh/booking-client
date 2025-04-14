@@ -30,6 +30,9 @@ export default function RegisterPage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
 
+  // Hardcoded brandId as requested
+  const BRAND_ID = "67bb00a19f5bc27ae88e5a53";
+
   const {
     register,
     handleSubmit,
@@ -47,14 +50,14 @@ export default function RegisterPage() {
   const onSubmit = async (data: RegisterFormData) => {
     setIsLoading(true);
     try {
-      // Simplified user data
+      // Simplified user data with hardcoded brandId
       const userData = {
         name: data.name,
         email: data.email,
         password: data.password,
       };
 
-      await registerUser(userData);
+      await registerUser(userData, BRAND_ID);
       toast.success("Registration successful!");
       router.push("/");
     } catch (error: any) {

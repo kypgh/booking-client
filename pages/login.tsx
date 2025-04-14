@@ -29,6 +29,9 @@ export default function LoginPage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
 
+  // Hardcoded brandId as requested
+  const BRAND_ID = "67bb00a19f5bc27ae88e5a53";
+
   const {
     register,
     handleSubmit,
@@ -46,7 +49,8 @@ export default function LoginPage() {
   const onSubmit = async (data: LoginFormData) => {
     setIsLoading(true);
     try {
-      await login(data.email, data.password);
+      // Include the hardcoded brandId in the login function call
+      await login(data.email, data.password, BRAND_ID);
       toast.success("Login successful!");
       router.push("/");
     } catch (error: any) {

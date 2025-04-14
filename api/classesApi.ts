@@ -1,12 +1,28 @@
 import agent from "./agent";
+import { ClassData, Session } from "@/hooks/useApi";
+
+// Define return types for API responses
+interface ApiResponse<T> {
+  data: T;
+  [key: string]: any;
+}
 
 // Classes-related API endpoints
 const ClassesApi = {
   // Get all classes
-  getAllClasses: async () => {
+  getAllClasses: async (
+    businessType?: "fixed" | "hourly"
+  ): Promise<ApiResponse<ClassData[]>> => {
     try {
-      const response = await agent.get("/api/class");
-      return response.data;
+      let url = "/class?brandId=67bb00a19f5bc27ae88e5a53";
+
+      // Add businessType as a query parameter if provided
+      if (businessType) {
+        url += `?businessType=${businessType}`;
+      }
+
+      const response = await agent.get(url);
+      return response;
     } catch (error) {
       console.error("Get classes error:", error);
       throw error;
@@ -14,10 +30,10 @@ const ClassesApi = {
   },
 
   // Get class by ID
-  getClassById: async (classId) => {
+  getClassById: async (classId: string): Promise<ApiResponse<ClassData>> => {
     try {
-      const response = await agent.get(`/api/class/${classId}`);
-      return response.data;
+      const response = await agent.get(`/class/${classId}`);
+      return response;
     } catch (error) {
       console.error("Get class error:", error);
       throw error;
@@ -25,7 +41,15 @@ const ClassesApi = {
   },
 
   // Get available sessions for a class
-  getClassSessions: async (classId, filters = {}) => {
+  getClassSessions: async (
+    classId: string,
+    filters: {
+      startDate?: string;
+      endDate?: string;
+      status?: string;
+      includeFullyBooked?: boolean;
+    } = {}
+  ): Promise<ApiResponse<Session[]>> => {
     try {
       // Convert filters to query params
       const queryParams = new URLSearchParams();
@@ -35,12 +59,12 @@ const ClassesApi = {
         }
       });
 
-      const url = `/api/session/${classId}${
+      const url = `/session/${classId}${
         queryParams.toString() ? `?${queryParams.toString()}` : ""
       }`;
 
       const response = await agent.get(url);
-      return response.data;
+      return response;
     } catch (error) {
       console.error("Get class sessions error:", error);
       throw error;
@@ -48,7 +72,20 @@ const ClassesApi = {
   },
 
   // Get available sessions
-  getAvailableSessions: async (filters = {}) => {
+  getAvailableSessions: async (
+    filters: {
+      startDate?: string;
+      endDate?: string;
+      brandId?: string;
+      classId?: string;
+      instructorId?: string;
+    } = {}
+  ): Promise<
+    ApiResponse<{
+      sessions: Session[];
+      groupedByDate: Record<string, Session[]>;
+    }>
+  > => {
     try {
       const queryParams = new URLSearchParams();
       Object.entries(filters).forEach(([key, value]) => {
@@ -57,12 +94,12 @@ const ClassesApi = {
         }
       });
 
-      const url = `/api/session/availability${
+      const url = `/session/availability${
         queryParams.toString() ? `?${queryParams.toString()}` : ""
       }`;
 
       const response = await agent.get(url);
-      return response.data;
+      return response;
     } catch (error) {
       console.error("Get available sessions error:", error);
       throw error;
