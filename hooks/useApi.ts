@@ -3,6 +3,7 @@ import ClassesApi from "@/api/classesApi";
 import BookingsApi from "@/api/bookingsApi";
 import PackagesApi from "@/api/packagesApi";
 import { useAuth } from "@/contexts/AuthContext";
+import InvitationApi, { InvitationData } from "@/api/invitationApi";
 
 // Types
 export interface Session {
@@ -234,5 +235,16 @@ export const useSubscriptions = () => {
       return response.data;
     },
     ...authCheck,
+  });
+};
+
+export const useVerifyInvitation = (token: string, enabled = true) => {
+  return useQuery({
+    queryKey: ["invitation", token],
+    queryFn: async () => {
+      const response = await InvitationApi.verifyInvitation(token);
+      return response.data as InvitationData;
+    },
+    enabled: !!token && enabled,
   });
 };

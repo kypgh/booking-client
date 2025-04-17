@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import BookingsApi from "@/api/bookingsApi";
 import PackagesApi from "@/api/packagesApi";
+import InvitationApi from "@/api/invitationApi";
 
 // Types
 export interface BookingRequest {
@@ -110,6 +111,30 @@ export const usePurchasePackage = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["packages", "active"] });
+    },
+  });
+};
+
+export const useCheckInvitations = () => {
+  return useMutation({
+    mutationFn: async (email: string) => {
+      const response = await InvitationApi.checkInvitationsByEmail(email);
+      return response.data.invitations;
+    },
+  });
+};
+
+export const useAcceptInvitation = () => {
+  return useMutation({
+    mutationFn: async ({
+      token,
+      userData,
+    }: {
+      token: string;
+      userData: any;
+    }) => {
+      const response = await InvitationApi.acceptInvitation(token, userData);
+      return response.data;
     },
   });
 };
