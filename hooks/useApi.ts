@@ -4,6 +4,7 @@ import BookingsApi from "@/api/bookingsApi";
 import PackagesApi from "@/api/packagesApi";
 import { useAuth } from "@/contexts/AuthContext";
 import InvitationApi, { InvitationData } from "@/api/invitationApi";
+import SessionsApi, { SessionDetail } from "@/api/sessionsApi";
 
 // Types
 export interface Session {
@@ -272,5 +273,18 @@ export const useVerifyInvitation = (token: string, enabled = true) => {
       return response.data as InvitationData;
     },
     enabled: !!token && enabled,
+  });
+};
+
+export const useSessionDetails = (sessionId: string) => {
+  const authCheck = useAuthCheck();
+
+  return useQuery({
+    queryKey: ["sessions", sessionId],
+    queryFn: async () => {
+      const response = await SessionsApi.getSessionById(sessionId);
+      return response.data as SessionDetail;
+    },
+    enabled: !!sessionId && authCheck.enabled,
   });
 };

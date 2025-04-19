@@ -85,6 +85,10 @@ export default function SchedulePage() {
     router.push(`/book/${sessionId}`);
   };
 
+  const handleOpenSession = (sessionId: string) => {
+    router.push(`/session/${sessionId}`);
+  };
+
   // Get sessions for selected date
   const getSessionsForDate = (date: Date) => {
     if (!sessionsData || !sessionsData.groupedByDate) return [];
@@ -185,6 +189,7 @@ export default function SchedulePage() {
                   <Card
                     key={session.id}
                     className="cursor-pointer hover:border-primary/50 transition-colors"
+                    onClick={() => handleOpenSession(session.id)}
                   >
                     <CardContent className="p-3">
                       <div className="flex justify-between items-start">

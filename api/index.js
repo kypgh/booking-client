@@ -4,9 +4,18 @@ import ClassesApi from "./classesApi";
 import BookingsApi from "./bookingsApi";
 import PackagesApi from "./packagesApi";
 import InvitationApi from "./invitationApi";
+import SessionsApi from "./sessionsApi";
 
 // Export all APIs
-export { agent, AuthApi, ClassesApi, BookingsApi, PackagesApi, InvitationApi };
+export {
+  agent,
+  AuthApi,
+  ClassesApi,
+  BookingsApi,
+  PackagesApi,
+  InvitationApi,
+  SessionsApi,
+};
 
 // Default export for convenience
 export default {
@@ -16,4 +25,5 @@ export default {
   bookings: BookingsApi,
   packages: PackagesApi,
   invitation: InvitationApi,
+  sessions: SessionsApi,
 };
