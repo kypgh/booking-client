@@ -1,85 +1,28 @@
-import React, { useState } from "react";
+import React from "react";
 import { useRouter } from "next/router";
 import MainLayout from "@/components/layouts/MainLayout";
 import { useClassList, ClassData } from "@/hooks/useApi";
-import { Calendar, Clock, Users, Search, Filter } from "lucide-react";
+import { Calendar, Clock, Users } from "lucide-react";
 
 // UI Components
 import { Card, CardContent } from "@/components/ui/card";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import LoadingSpinner from "@/components/ui/loading-spinner";
 
 export default function ClassesPage() {
   const router = useRouter();
-  const [businessType, setBusinessType] = useState<
-    "fixed" | "hourly" | undefined
-  >(undefined);
-  const [searchQuery, setSearchQuery] = useState("");
-  const { data: classes, isLoading, error } = useClassList(businessType);
-
-  // Filter classes based on search query
-  const filteredClasses = classes?.filter(
-    (cls: any) =>
-      cls.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      cls.description.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const { data: classes, isLoading, error } = useClassList();
 
   const handleViewClass = (classId: string) => {
     router.push(`/classes/${classId}`);
   };
 
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value);
-  };
-
   return (
     <MainLayout
       title="Classes | FitBook"
-      headerTitle="Browse Classes"
+      headerTitle="Available Classes"
       loading={isLoading}
     >
-      {/* Search Bar */}
-      <div className="mb-4 flex gap-2">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="Search classes..."
-            className="pl-9"
-            value={searchQuery}
-            onChange={handleSearchChange}
-          />
-        </div>
-        <Button variant="outline" size="icon">
-          <Filter className="h-4 w-4" />
-        </Button>
-      </div>
-
-      {/* Tabs for class type */}
-      <Tabs
-        defaultValue="all"
-        onValueChange={(value) => {
-          if (value === "all") setBusinessType(undefined);
-          else if (value === "fixed") setBusinessType("fixed");
-          else setBusinessType("hourly");
-        }}
-        className="mb-6"
-      >
-        <TabsList className="w-full">
-          <TabsTrigger value="all" className="flex-1">
-            All
-          </TabsTrigger>
-          <TabsTrigger value="fixed" className="flex-1">
-            Classes
-          </TabsTrigger>
-          <TabsTrigger value="hourly" className="flex-1">
-            Open Gym
-          </TabsTrigger>
-        </TabsList>
-      </Tabs>
-
       {/* Error state */}
       {error && (
         <div className="text-center py-10 text-destructive">
@@ -95,24 +38,15 @@ export default function ClassesPage() {
       )}
 
       {/* Empty state */}
-      {filteredClasses?.length === 0 && !isLoading && (
+      {classes?.length === 0 && !isLoading && (
         <div className="text-center py-10 text-muted-foreground">
-          <p>No classes found.</p>
-          {searchQuery && (
-            <Button
-              variant="outline"
-              className="mt-4"
-              onClick={() => setSearchQuery("")}
-            >
-              Clear Search
-            </Button>
-          )}
+          <p>No classes available.</p>
         </div>
       )}
 
       {/* Classes list */}
       <div className="space-y-4">
-        {filteredClasses?.map((classItem: any) => (
+        {classes?.map((classItem: ClassData) => (
           <ClassCard
             key={classItem._id}
             classData={classItem}
@@ -131,62 +65,125 @@ interface ClassCardProps {
 }
 
 const ClassCard: React.FC<ClassCardProps> = ({ classData, onClick }) => {
+  // Format schedule days into a readable string
+  const formatScheduleDays = (days: string[]) => {
+    if (!days || days.length === 0) return "No schedule available";
+
+    // If it's everyday (7 days), return "Everyday"
+    if (days.length === 7) return "Everyday";
+
+    // If it's weekdays only (Mon-Fri)
+    if (
+      days.length === 5 &&
+      days.includes("Monday") &&
+      days.includes("Tuesday") &&
+      days.includes("Wednesday") &&
+      days.includes("Thursday") &&
+      days.includes("Friday") &&
+      !days.includes("Saturday") &&
+      !days.includes("Sunday")
+    ) {
+      return "Weekdays";
+    }
+
+    // Otherwise, format as comma-separated list
+    return days.join(", ");
+  };
+
+  // Format time in 12-hour format
+  const formatTime = (time: string) => {
+    if (!time) return "";
+
+    const [hours, minutes] = time.split(":");
+    const hour = parseInt(hours);
+
+    if (isNaN(hour)) return time;
+
+    const period = hour >= 12 ? "PM" : "AM";
+    const hour12 = hour % 12 || 12;
+
+    return `${hour12}:${minutes} ${period}`;
+  };
+
   return (
     <Card
       className="cursor-pointer overflow-hidden hover:border-primary/50 transition-colors"
       onClick={onClick}
     >
-      <CardContent className="p-0">
-        {/* Optional class image - uncomment if you have images */}
-        {/* <div className="h-32 bg-muted-foreground/10">
-          <img 
-            src="/path-to-placeholder-image.jpg" 
-            alt={classData.name}
-            className="h-full w-full object-cover"
-          />
-        </div> */}
+      <CardContent className="p-4">
+        <div className="mb-2">
+          <h3 className="font-medium">{classData.name}</h3>
+        </div>
 
-        <div className="p-4">
-          <div className="flex justify-between items-start mb-2">
-            <h3 className="font-medium">{classData.name}</h3>
-            <Badge
-              variant={
-                classData.businessType === "fixed" ? "default" : "secondary"
-              }
-            >
-              {classData.businessType === "fixed" ? "Class" : "Open Gym"}
-            </Badge>
-          </div>
+        <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
+          {classData.description || "No description available."}
+        </p>
 
-          <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
-            {classData.description || "No description available."}
-          </p>
-
-          <div className="flex flex-wrap gap-y-2 text-sm text-muted-foreground">
-            <div className="flex items-center mr-4">
-              <Clock size={14} className="mr-1" />
-              <span>{classData.duration} min</span>
+        {/* Schedule information - Fixed Class Type */}
+        {classData.businessType === "fixed" && classData.schedule && (
+          <div className="mb-3 p-2 bg-accent/30 rounded-md">
+            <div className="flex items-center text-sm mb-1">
+              <Calendar size={14} className="mr-1 text-primary" />
+              <span className="font-medium">Schedule:</span>
             </div>
-
-            <div className="flex items-center mr-4">
-              <Users size={14} className="mr-1" />
-              <span>Max {classData.capacity}</span>
-            </div>
-
-            <div className="flex items-center">
-              <Calendar size={14} className="mr-1" />
-              <span>Multiple sessions</span>
+            <div className="text-sm pl-5">
+              <div>{formatScheduleDays(classData.schedule.days)}</div>
+              {classData.schedule.startTime && classData.schedule.endTime && (
+                <div>
+                  {formatTime(classData.schedule.startTime)} -{" "}
+                  {formatTime(classData.schedule.endTime)}
+                </div>
+              )}
             </div>
           </div>
+        )}
 
-          <div className="mt-3 pt-3 border-t border-border flex justify-between items-center">
-            <div className="text-sm">
-              <span className="text-muted-foreground">Instructor: </span>
-              <span>{classData.instructor?.name || "TBD"}</span>
+        {/* Operating Hours - Hourly Type */}
+        {classData.businessType === "hourly" && classData.operatingHours && (
+          <div className="mb-3 p-2 bg-accent/30 rounded-md">
+            <div className="flex items-center text-sm mb-1">
+              <Clock size={14} className="mr-1 text-primary" />
+              <span className="font-medium">Operating Hours:</span>
             </div>
-            <Button size="sm" variant="outline">
-              Book
-            </Button>
+            <div className="text-sm pl-5">
+              {classData.operatingHours.days &&
+                classData.operatingHours.days.length > 0 && (
+                  <div>{formatScheduleDays(classData.operatingHours.days)}</div>
+                )}
+              {classData.operatingHours.timeBlocks &&
+                classData.operatingHours.timeBlocks.length > 0 && (
+                  <div className="space-y-1 mt-1">
+                    {classData.operatingHours.timeBlocks.map((block, index) => (
+                      <div key={index}>
+                        {formatTime(block.startTime)} -{" "}
+                        {formatTime(block.endTime)}
+                        <span className="text-xs text-muted-foreground ml-1">
+                          ({block.interval} min sessions)
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+            </div>
+          </div>
+        )}
+
+        <div className="flex flex-wrap gap-y-2 text-sm text-muted-foreground">
+          <div className="flex items-center mr-4">
+            <Clock size={14} className="mr-1" />
+            <span>{classData.duration} min</span>
+          </div>
+
+          <div className="flex items-center mr-4">
+            <Users size={14} className="mr-1" />
+            <span>Max {classData.capacity}</span>
+          </div>
+        </div>
+
+        <div className="mt-3 pt-3 border-t border-border">
+          <div className="text-sm">
+            <span className="text-muted-foreground">Instructor: </span>
+            <span>{classData.instructor?.name || "TBD"}</span>
           </div>
         </div>
       </CardContent>

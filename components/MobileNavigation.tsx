@@ -1,7 +1,7 @@
 import React from "react";
 import { useRouter } from "next/router";
 import Link from "next/link";
-import { Home, Calendar, User, List } from "lucide-react";
+import { Home, Calendar, User, List, Clock } from "lucide-react";
 
 export default function MobileNavigation() {
   const router = useRouter();
@@ -18,7 +18,8 @@ export default function MobileNavigation() {
   const navItems = [
     { label: "Home", path: "/", icon: Home },
     { label: "Classes", path: "/classes", icon: List },
-    { label: "Bookings", path: "/bookings", icon: Calendar },
+    { label: "Schedule", path: "/schedule", icon: Calendar },
+    { label: "Bookings", path: "/bookings", icon: Clock },
     { label: "Profile", path: "/profile", icon: User },
   ];
 

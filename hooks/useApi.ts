@@ -33,10 +33,32 @@ export interface ClassData {
   instructor: {
     _id: string;
     name: string;
+    roles?: {
+      isAdmin?: boolean;
+      isInstructor?: boolean;
+    };
   };
   businessType: "fixed" | "hourly";
   capacity: number;
   status: string;
+  schedule?: {
+    days: string[];
+    startTime: string;
+    endTime: string;
+  };
+  operatingHours?: {
+    days: string[];
+    timeBlocks: Array<{
+      startTime: string;
+      endTime: string;
+      interval: number;
+      capacity: number;
+    }>;
+  };
+  cancellationPolicy?: {
+    hours: number;
+  };
+  brand?: string;
 }
 
 export interface PackageData {
@@ -83,7 +105,11 @@ export const useClassList = (businessType?: "fixed" | "hourly") => {
     queryKey: ["classes", { businessType }],
     queryFn: async () => {
       const response = await ClassesApi.getAllClasses(businessType);
-      return response.data as ClassData[];
+      // Filter to only show active classes
+      const activeClasses = response.data.filter(
+        (classItem: ClassData) => classItem.status === "active"
+      );
+      return activeClasses as ClassData[];
     },
     ...authCheck,
   });

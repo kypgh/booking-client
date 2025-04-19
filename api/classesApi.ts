@@ -11,15 +11,19 @@ interface ApiResponse<T> {
 const ClassesApi = {
   // Get all classes
   getAllClasses: async (
-    businessType?: "fixed" | "hourly"
+    businessType?: "fixed" | "hourly",
+    status: string = "active" // Default to active classes
   ): Promise<ApiResponse<ClassData[]>> => {
     try {
       let url = "/class?brandId=67bb00a19f5bc27ae88e5a53";
 
       // Add businessType as a query parameter if provided
       if (businessType) {
-        url += `?businessType=${businessType}`;
+        url += `&businessType=${businessType}`;
       }
+
+      // Add status filter
+      url += `&status=${status}`;
 
       const response = await agent.get(url);
       return response;
