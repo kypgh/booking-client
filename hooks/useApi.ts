@@ -288,3 +288,17 @@ export const useSessionDetails = (sessionId: string) => {
     enabled: !!sessionId && authCheck.enabled,
   });
 };
+
+// Add a useSession hook for getting single session details
+export const useSession = (sessionId: string) => {
+  const authCheck = useAuthCheck();
+
+  return useQuery({
+    queryKey: ["session", sessionId],
+    queryFn: async () => {
+      const response = await SessionsApi.getSessionById(sessionId);
+      return response.data;
+    },
+    enabled: !!sessionId && authCheck.enabled,
+  });
+};

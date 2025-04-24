@@ -59,7 +59,7 @@ const PackagesApi = {
   // Get active packages for client
   getActivePackages: async (): Promise<ApiResponse<PackageBookingData[]>> => {
     try {
-      const response = await agent.get("/api/package/client");
+      const response = await agent.get("/package/client");
       return response;
     } catch (error) {
       console.error("Get active packages error:", error);
@@ -70,7 +70,7 @@ const PackagesApi = {
   // Get package history for client
   getPackageHistory: async (): Promise<ApiResponse<PackageBookingData[]>> => {
     try {
-      const response = await agent.get("/api/package/client?history=true");
+      const response = await agent.get("/package/client?history=true");
       return response;
     } catch (error) {
       console.error("Get package history error:", error);
@@ -83,7 +83,7 @@ const PackagesApi = {
     packageId: string
   ): Promise<ApiResponse<PackageData>> => {
     try {
-      const response = await agent.get(`/api/package/${packageId}`);
+      const response = await agent.get(`/package/${packageId}`);
       return response;
     } catch (error) {
       console.error("Get package details error:", error);
@@ -97,7 +97,7 @@ const PackagesApi = {
     paymentData: PaymentData
   ): Promise<ApiResponse<PackageBookingData>> => {
     try {
-      const response = await agent.post("/api/package/purchase", {
+      const response = await agent.post("/package/purchase", {
         package: packageId,
         payment: paymentData,
       });
@@ -113,9 +113,7 @@ const PackagesApi = {
     packageBookingId: string
   ): Promise<ApiResponse<BookingData[]>> => {
     try {
-      const response = await agent.get(
-        `/api/package/bookings/${packageBookingId}`
-      );
+      const response = await agent.get(`/package/bookings/${packageBookingId}`);
       return response;
     } catch (error) {
       console.error("Get package bookings error:", error);
@@ -126,7 +124,7 @@ const PackagesApi = {
   // Get client's subscriptions
   getSubscriptions: async (): Promise<ApiResponse<SubscriptionData[]>> => {
     try {
-      const response = await agent.get("/api/subscription");
+      const response = await agent.get("/subscription");
       return response;
     } catch (error) {
       console.error("Get subscriptions error:", error);

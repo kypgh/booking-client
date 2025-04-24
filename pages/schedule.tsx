@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import LoadingSpinner from "@/components/ui/loading-spinner";
+import BookSessionDialog from "@/components/BookSessionDialog";
 
 export default function SchedulePage() {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
@@ -24,6 +25,8 @@ export default function SchedulePage() {
   const [activeBrandId, setActiveBrandId] = useState<string | null>(null);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [isBookingDialogOpen, setIsBookingDialogOpen] = useState(false);
+  const [selectedSession, setSelectedSession] = useState<any>(null);
 
   // Calculate start and end dates for the week view
   const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 }); // Week starts on Monday
@@ -81,8 +84,9 @@ export default function SchedulePage() {
   };
 
   // Handle booking a session
-  const handleBookSession = (sessionId: string) => {
-    router.push(`/book/${sessionId}`);
+  const handleBookSession = (session: any) => {
+    setSelectedSession(session);
+    setIsBookingDialogOpen(true);
   };
 
   const handleOpenSession = (sessionId: string) => {
@@ -220,7 +224,10 @@ export default function SchedulePage() {
                           <Button
                             size="sm"
                             className="mt-2"
-                            onClick={() => handleBookSession(session.id)}
+                            onClick={(e) => {
+                              e.stopPropagation(); // Prevent card click
+                              handleBookSession(session);
+                            }}
                           >
                             Book
                           </Button>
@@ -240,6 +247,15 @@ export default function SchedulePage() {
           )}
         </div>
       </div>
+
+      {/* Booking Dialog */}
+      {selectedSession && (
+        <BookSessionDialog
+          isOpen={isBookingDialogOpen}
+          onClose={() => setIsBookingDialogOpen(false)}
+          session={selectedSession}
+        />
+      )}
     </MainLayout>
   );
 }

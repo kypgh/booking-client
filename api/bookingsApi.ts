@@ -20,7 +20,7 @@ const BookingsApi = {
   // Get user's active bookings
   getActiveBookings: async (): Promise<ApiResponse<BookingData[]>> => {
     try {
-      const response = await agent.get("/api/booking");
+      const response = await agent.get("/booking");
       return response;
     } catch (error) {
       console.error("Get active bookings error:", error);
@@ -31,7 +31,7 @@ const BookingsApi = {
   // Get user's booking history
   getBookingHistory: async (): Promise<ApiResponse<BookingData[]>> => {
     try {
-      const response = await agent.get("/api/booking?type=history");
+      const response = await agent.get("/booking?type=history");
       return response;
     } catch (error) {
       console.error("Get booking history error:", error);
@@ -44,7 +44,7 @@ const BookingsApi = {
     bookingData: BookingRequest
   ): Promise<ApiResponse<BookingData>> => {
     try {
-      const response = await agent.post("/api/booking", bookingData);
+      const response = await agent.post("/booking", bookingData);
       return response;
     } catch (error) {
       console.error("Create booking error:", error);
@@ -57,7 +57,7 @@ const BookingsApi = {
     sessionId: string
   ): Promise<ApiResponse<BookingData>> => {
     try {
-      const response = await agent.post("/api/booking/subscription", {
+      const response = await agent.post("/booking/subscription", {
         sessionId,
       });
       return response;
@@ -73,7 +73,7 @@ const BookingsApi = {
     sessionId: string
   ): Promise<ApiResponse<BookingData>> => {
     try {
-      const response = await agent.post("/api/booking/package", {
+      const response = await agent.post("/booking/package", {
         packageBookingId,
         sessionId,
       });
@@ -87,7 +87,7 @@ const BookingsApi = {
   // Cancel a booking
   cancelBooking: async (bookingId: string): Promise<ApiResponse<void>> => {
     try {
-      const response = await agent.delete(`/api/booking/${bookingId}`);
+      const response = await agent.delete(`/booking/${bookingId}`);
       return response;
     } catch (error) {
       console.error("Cancel booking error:", error);
@@ -101,7 +101,7 @@ const BookingsApi = {
     reason: string = "Client cancelled"
   ): Promise<ApiResponse<BookingData>> => {
     try {
-      const response = await agent.post("/api/booking/cancel-package", {
+      const response = await agent.post("/booking/cancel-package", {
         bookingId,
         reason,
       });

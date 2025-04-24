@@ -17,45 +17,14 @@ export interface PackagePurchaseRequest {
     transactionId?: string;
   };
 }
+// Enhanced booking request type to support all booking types
+export interface BookingRequest {
+  sessionId: string;
+  bookingType: "monthly" | "individual" | "subscription";
+  packageBookingId?: string;
+}
 
 // Booking Mutations
-export const useCreateBooking = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (data: BookingRequest) => {
-      let response;
-
-      if (data.bookingType === "subscription") {
-        // Handle subscription booking
-        response = await BookingsApi.createSubscriptionBooking(data.sessionId);
-      } else if (data.bookingType === "monthly" && data.packageBookingId) {
-        // Handle package credits booking
-        response = await BookingsApi.createPackageBooking(
-          data.packageBookingId,
-          data.sessionId
-        );
-      } else {
-        // Handle regular booking
-        response = await BookingsApi.createBooking({
-          session: data.sessionId,
-          bookingType: data.bookingType,
-          packageBookingId: data.packageBookingId,
-        });
-      }
-
-      return response.data;
-    },
-    onSuccess: () => {
-      // Invalidate relevant queries
-      queryClient.invalidateQueries({ queryKey: ["bookings", "active"] });
-      queryClient.invalidateQueries({ queryKey: ["sessions", "available"] });
-
-      // If it's a package booking, invalidate package data
-      queryClient.invalidateQueries({ queryKey: ["packages", "active"] });
-    },
-  });
-};
 
 export const useCancelBooking = () => {
   const queryClient = useQueryClient();
@@ -135,6 +104,49 @@ export const useAcceptInvitation = () => {
     }) => {
       const response = await InvitationApi.acceptInvitation(token, userData);
       return response.data;
+    },
+  });
+};
+
+export const useCreateBooking = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: BookingRequest) => {
+      let response;
+
+      switch (data.bookingType) {
+        case "subscription":
+          response = await BookingsApi.createSubscriptionBooking(
+            data.sessionId
+          );
+          break;
+        case "monthly":
+          if (!data.packageBookingId) {
+            throw new Error(
+              "Package booking ID is required for monthly bookings"
+            );
+          }
+          response = await BookingsApi.createPackageBooking(
+            data.packageBookingId,
+            data.sessionId
+          );
+          break;
+        case "individual":
+          response = await BookingsApi.createBooking({
+            session: data.sessionId,
+            bookingType: data.bookingType,
+          });
+          break;
+      }
+
+      return response.data;
+    },
+    onSuccess: () => {
+      // Invalidate relevant queries
+      queryClient.invalidateQueries({ queryKey: ["bookings", "active"] });
+      queryClient.invalidateQueries({ queryKey: ["sessions", "available"] });
+      queryClient.invalidateQueries({ queryKey: ["packages", "active"] });
     },
   });
 };
