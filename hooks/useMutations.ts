@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import BookingsApi from "@/api/bookingsApi";
 import PackagesApi from "@/api/packagesApi";
 import InvitationApi from "@/api/invitationApi";
+import { useAuth } from "@/contexts/AuthContext";
 
 // Types
 export interface BookingRequest {
@@ -22,6 +23,7 @@ export interface BookingRequest {
   sessionId: string;
   bookingType: "monthly" | "individual" | "subscription";
   packageBookingId?: string;
+  client?: string; // Make client optional
 }
 
 // Booking Mutations
@@ -110,6 +112,7 @@ export const useAcceptInvitation = () => {
 
 export const useCreateBooking = () => {
   const queryClient = useQueryClient();
+  const { user } = useAuth(); // Get current user context
 
   return useMutation({
     mutationFn: async (data: BookingRequest) => {
@@ -136,6 +139,7 @@ export const useCreateBooking = () => {
           response = await BookingsApi.createBooking({
             session: data.sessionId,
             bookingType: data.bookingType,
+            client: user?.id, // Include the client ID from auth context
           });
           break;
       }

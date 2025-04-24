@@ -44,7 +44,10 @@ const BookingsApi = {
     bookingData: BookingRequest
   ): Promise<ApiResponse<BookingData>> => {
     try {
-      const response = await agent.post("/booking", bookingData);
+      const response = await agent.post("/booking", {
+        ...bookingData,
+        client: bookingData.client || "auto", // Include client ID or let backend use current auth user
+      });
       return response;
     } catch (error) {
       console.error("Create booking error:", error);

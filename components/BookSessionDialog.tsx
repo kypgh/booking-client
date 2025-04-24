@@ -87,9 +87,10 @@ const BookSessionDialog: React.FC<BookSessionDialogProps> = ({
 
     const bookingData = {
       sessionId: session.id,
-      bookingType: bookingMethod,
+      bookingType: bookingMethod as BookingMethod,
       packageBookingId:
         bookingMethod === "monthly" ? selectedPackage : undefined,
+      // No need to add client here - it will be added in the mutation
     };
 
     createBooking(bookingData, {

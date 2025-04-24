@@ -8,6 +8,7 @@ import {
   isToday,
   isBefore,
   isEqual,
+  isPast,
 } from "date-fns";
 import { ChevronLeft, ChevronRight, Clock, User } from "lucide-react";
 import MainLayout from "@/components/layouts/MainLayout";
@@ -93,12 +94,42 @@ export default function SchedulePage() {
     router.push(`/session/${sessionId}`);
   };
 
-  // Get sessions for selected date
+  // Get sessions for selected date and filter out past sessions
   const getSessionsForDate = (date: Date) => {
     if (!sessionsData || !sessionsData.groupedByDate) return [];
 
     const dateStr = format(date, "yyyy-MM-dd");
-    return sessionsData.groupedByDate[dateStr] || [];
+    const sessions = sessionsData.groupedByDate[dateStr] || [];
+
+    // Filter out past sessions if the selected date is today
+    if (isToday(date)) {
+      const now = new Date();
+      return sessions.filter((session) => {
+        const sessionDateTime = parseISO(session.dateTime);
+        return !isPast(sessionDateTime);
+      });
+    }
+
+    return sessions;
+  };
+
+  // Count future sessions for a date (for the dots in the day selector)
+  const countFutureSessionsForDate = (date: Date) => {
+    if (!sessionsData || !sessionsData.groupedByDate) return 0;
+
+    const dateStr = format(date, "yyyy-MM-dd");
+    const sessions = sessionsData.groupedByDate[dateStr] || [];
+
+    // If today, only count future sessions
+    if (isToday(date)) {
+      const now = new Date();
+      return sessions.filter((session) => {
+        const sessionDateTime = parseISO(session.dateTime);
+        return !isPast(sessionDateTime);
+      }).length;
+    }
+
+    return sessions.length;
   };
 
   const isLoading = authLoading || sessionsLoading || !activeBrandId;
@@ -131,7 +162,7 @@ export default function SchedulePage() {
         {/* Week Days */}
         <div className="grid grid-cols-7 gap-1 mb-4">
           {weekDates.map((date) => {
-            const dayHasSessions = getSessionsForDate(date).length > 0;
+            const futureSessions = countFutureSessionsForDate(date);
             const isSelected = selectedDate && isEqual(selectedDate, date);
             const isPastDate = isBefore(date, new Date()) && !isToday(date);
 
@@ -148,7 +179,7 @@ export default function SchedulePage() {
                 className={`flex flex-col h-16 p-1 ${
                   isPastDate ? "opacity-50" : ""
                 }`}
-                disabled={isPastDate || !dayHasSessions}
+                disabled={isPastDate || futureSessions === 0}
                 onClick={() => handleDateSelect(date)}
               >
                 <span className="text-xs font-medium">
@@ -157,7 +188,7 @@ export default function SchedulePage() {
                 <span className={`text-lg ${isToday(date) ? "font-bold" : ""}`}>
                   {format(date, "d")}
                 </span>
-                {dayHasSessions && (
+                {futureSessions > 0 && (
                   <div className="mt-1 w-1 h-1 rounded-full bg-primary"></div>
                 )}
               </Button>
@@ -186,7 +217,9 @@ export default function SchedulePage() {
 
               {getSessionsForDate(selectedDate).length === 0 ? (
                 <p className="text-center py-10 text-muted-foreground">
-                  No sessions available for this day
+                  {isToday(selectedDate)
+                    ? "No more sessions available for today"
+                    : "No sessions available for this day"}
                 </p>
               ) : (
                 getSessionsForDate(selectedDate).map((session) => (
