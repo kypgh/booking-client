@@ -1,7 +1,7 @@
 import React from "react";
 import { useRouter } from "next/router";
 import Link from "next/link";
-import { Home, Calendar, User, List, Clock } from "lucide-react";
+import { Home, Calendar, User, List, Clock, Package } from "lucide-react";
 
 export default function MobileNavigation() {
   const router = useRouter();
@@ -20,6 +20,7 @@ export default function MobileNavigation() {
     { label: "Classes", path: "/classes", icon: List },
     { label: "Schedule", path: "/schedule", icon: Calendar },
     { label: "Bookings", path: "/bookings", icon: Clock },
+    { label: "Packages", path: "/packages", icon: Package },
     { label: "Profile", path: "/profile", icon: User },
   ];
 

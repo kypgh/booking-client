@@ -15,15 +15,18 @@ interface PaymentData {
 
 interface SubscriptionData {
   id: string;
-  client: {
+  client?: {
     id: string;
     name: string;
     email: string;
   };
-  startDate: string;
-  endDate: string;
-  status: string;
-  brand: string;
+  startDate?: string;
+  endDate?: string;
+  status?: string;
+  brand?: string;
+  name: string;
+  description?: string;
+  price: number;
   includedClasses: Array<{
     id: string;
     name: string;
@@ -33,6 +36,8 @@ interface SubscriptionData {
     count: number;
     period: "day" | "week" | "month";
   };
+  durationDays: number;
+  isActive: boolean;
 }
 
 interface PackageBookingData {
@@ -56,6 +61,19 @@ interface PackageBookingData {
 
 // Packages and subscriptions related API endpoints
 const PackagesApi = {
+  // Get all available packages (not just client's active ones)
+  getAvailablePackages: async (
+    brandId: string
+  ): Promise<ApiResponse<PackageData[]>> => {
+    try {
+      const response = await agent.get(`/package?brandId=${brandId}`);
+      return response;
+    } catch (error) {
+      console.error("Get available packages error:", error);
+      throw error;
+    }
+  },
+
   // Get active packages for client
   getActivePackages: async (): Promise<ApiResponse<PackageBookingData[]>> => {
     try {
@@ -128,6 +146,44 @@ const PackagesApi = {
       return response;
     } catch (error) {
       console.error("Get subscriptions error:", error);
+      throw error;
+    }
+  },
+
+  // Get subscription plans for a brand
+  getSubscriptionPlans: async (
+    brandId: string
+  ): Promise<ApiResponse<SubscriptionData[]>> => {
+    try {
+      const response = await agent.get(
+        `/subscription/plans?brandId=${brandId}`
+      );
+      return response;
+    } catch (error) {
+      console.error("Get subscription plans error:", error);
+      throw error;
+    }
+  },
+
+  // Purchase a subscription
+  purchaseSubscription: async (
+    planId: string,
+    brandId: string,
+    paymentMethod: string = "credit_card",
+    transactionId?: string
+  ): Promise<ApiResponse<any>> => {
+    try {
+      const response = await agent.post("/subscription/purchase", {
+        planId,
+        brandId,
+        payment: {
+          method: paymentMethod,
+          transactionId,
+        },
+      });
+      return response;
+    } catch (error) {
+      console.error("Purchase subscription error:", error);
       throw error;
     }
   },

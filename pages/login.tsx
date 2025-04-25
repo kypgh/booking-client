@@ -3,6 +3,7 @@ import { useRouter } from "next/router";
 import Link from "next/link";
 import Head from "next/head";
 import { useAuth } from "@/contexts/AuthContext";
+import { useUserProfile } from "@/hooks/useApi";
 
 // UI Components
 import { Button } from "@/components/ui/button";
@@ -18,40 +19,20 @@ import LoadingSpinner from "@/components/ui/loading-spinner";
 export default function LoginIndexPage() {
   const { isAuthenticated } = useAuth();
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(true);
 
-  // Sample brands data (in a real application, you would fetch this from API)
-  const [brands, setBrands] = useState([
-    {
-      id: "67bb00a19f5bc27ae88e5a53",
-      name: "FitBook Gym",
-      description: "Your local fitness center",
-    },
-    {
-      id: "67bb04529f5bc27ae88e5a54",
-      name: "Yoga Studio",
-      description: "Peaceful yoga classes",
-    },
-    {
-      id: "67bb04a19f5bc27ae88e5a55",
-      name: "CrossFit Center",
-      description: "High intensity training",
-    },
-  ]);
+  // Use the hook to fetch user profile data including brands
+  const { data: userData, isLoading: profileLoading, error } = useUserProfile();
+
+  console.log(userData);
 
   // If already authenticated, redirect to home
   useEffect(() => {
     if (isAuthenticated) {
       router.push("/");
-    } else {
-      // Simulate loading brands
-      setTimeout(() => {
-        setIsLoading(false);
-      }, 500);
     }
   }, [isAuthenticated, router]);
 
-  if (isLoading) {
+  if (profileLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <LoadingSpinner size="lg" />
@@ -80,24 +61,46 @@ export default function LoginIndexPage() {
             </CardHeader>
 
             <CardContent>
-              <div className="space-y-3">
-                {brands.map((brand) => (
-                  <Link
-                    key={brand.id}
-                    href={`/login/${brand.id}`}
-                    className="block"
+              {error ? (
+                <div className="text-center py-4">
+                  <p className="text-destructive">Failed to load brands</p>
+                  <Button
+                    variant="outline"
+                    className="mt-4"
+                    onClick={() => router.reload()}
                   >
-                    <Card className="hover:border-primary/50 transition-colors cursor-pointer">
-                      <CardContent className="p-4">
-                        <h3 className="font-medium">{brand.name}</h3>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          {brand.description}
-                        </p>
-                      </CardContent>
-                    </Card>
+                    Retry
+                  </Button>
+                </div>
+              ) : userData?.brands && userData.brands.length > 0 ? (
+                <div className="space-y-3">
+                  {userData.brands.map((brand: any) => (
+                    <Link
+                      key={brand.id || brand._id}
+                      href={`/login/${brand.id || brand._id}`}
+                      className="block"
+                    >
+                      <Card className="hover:border-primary/50 transition-colors cursor-pointer">
+                        <CardContent className="p-4">
+                          <h3 className="font-medium">{brand.name}</h3>
+                          {brand.description && (
+                            <p className="text-sm text-muted-foreground mt-1">
+                              {brand.description}
+                            </p>
+                          )}
+                        </CardContent>
+                      </Card>
+                    </Link>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-4">
+                  <p className="text-muted-foreground">No brands available</p>
+                  <Link href="/register">
+                    <Button className="mt-4">Register</Button>
                   </Link>
-                ))}
-              </div>
+                </div>
+              )}
             </CardContent>
 
             <CardFooter className="flex flex-col space-y-4">

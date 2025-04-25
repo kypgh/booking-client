@@ -5,6 +5,7 @@ import PackagesApi from "@/api/packagesApi";
 import { useAuth } from "@/contexts/AuthContext";
 import InvitationApi, { InvitationData } from "@/api/invitationApi";
 import SessionsApi, { SessionDetail } from "@/api/sessionsApi";
+import AuthApi from "@/api/authApi";
 
 // Types
 export interface Session {
@@ -64,6 +65,7 @@ export interface ClassData {
 
 export interface PackageData {
   _id: string;
+  id: string;
   name: string;
   description: string;
   credits: number;
@@ -90,6 +92,26 @@ export interface BookingData {
   status: string;
   bookingType: string;
   createdAt: string;
+}
+
+export interface SubscriptionPlan {
+  _id: string;
+  id: string;
+  name: string;
+  description?: string;
+  price: number;
+  frequencyLimit?: {
+    count: number;
+    period: "day" | "week" | "month";
+  };
+  allowAllClasses: boolean;
+  includedClasses: Array<{
+    id: string;
+    name: string;
+    description?: string;
+  }>;
+  durationDays: number;
+  isActive: boolean;
 }
 
 // Helper function to check authentication
@@ -300,5 +322,46 @@ export const useSession = (sessionId: string) => {
       return response.data;
     },
     enabled: !!sessionId && authCheck.enabled,
+  });
+};
+
+// Hook to get all available packages for a brand
+export const useAvailablePackages = (brandId: string) => {
+  const authCheck = useAuthCheck();
+
+  return useQuery({
+    queryKey: ["packages", "available", brandId],
+    queryFn: async () => {
+      const response = await PackagesApi.getAvailablePackages(brandId);
+      return response.data as PackageData[];
+    },
+    enabled: !!brandId && authCheck.enabled,
+  });
+};
+
+// Hook to get subscription plans for a brand
+export const useSubscriptionPlans = (brandId: string) => {
+  const authCheck = useAuthCheck();
+
+  return useQuery({
+    queryKey: ["subscriptions", "plans", brandId],
+    queryFn: async () => {
+      const response = await PackagesApi.getSubscriptionPlans(brandId);
+      return response.data as SubscriptionPlan[];
+    },
+    enabled: !!brandId && authCheck.enabled,
+  });
+};
+
+export const useUserProfile = () => {
+  const authCheck = useAuthCheck();
+
+  return useQuery({
+    queryKey: ["user", "profile"],
+    queryFn: async () => {
+      const response = await AuthApi.getCurrentUser();
+      return response.data;
+    },
+    ...authCheck,
   });
 };

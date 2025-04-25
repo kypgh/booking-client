@@ -26,6 +26,13 @@ export interface BookingRequest {
   client?: string; // Make client optional
 }
 
+export interface SubscriptionPurchaseRequest {
+  planId: string;
+  brandId: string;
+  paymentMethod?: string;
+  transactionId?: string;
+}
+
 // Booking Mutations
 
 export const useCancelBooking = () => {
@@ -151,6 +158,30 @@ export const useCreateBooking = () => {
       queryClient.invalidateQueries({ queryKey: ["bookings", "active"] });
       queryClient.invalidateQueries({ queryKey: ["sessions", "available"] });
       queryClient.invalidateQueries({ queryKey: ["packages", "active"] });
+    },
+  });
+};
+
+export const usePurchaseSubscription = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      planId,
+      brandId,
+      paymentMethod,
+      transactionId,
+    }: SubscriptionPurchaseRequest) => {
+      const response = await PackagesApi.purchaseSubscription(
+        planId,
+        brandId,
+        paymentMethod,
+        transactionId
+      );
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["subscriptions"] });
     },
   });
 };
