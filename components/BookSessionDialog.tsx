@@ -42,6 +42,7 @@ interface BookSessionDialogProps {
       };
     };
   };
+  brandId?: string;
 }
 
 type BookingMethod = "individual" | "monthly" | "subscription";

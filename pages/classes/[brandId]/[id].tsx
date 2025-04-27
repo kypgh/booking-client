@@ -22,7 +22,7 @@ inTwoWeeks.setDate(today.getDate() + 14);
 
 export default function ClassDetailsPage() {
   const router = useRouter();
-  const { id } = router.query;
+  const { brandId, id } = router.query;
   const { data: classData, isLoading, error } = useClassDetails(id as string);
 
   const { data: sessions, isLoading: sessionsLoading } = useClassSessions(
@@ -74,6 +74,10 @@ export default function ClassDetailsPage() {
     return `${hour12}:${minutes} ${period}`;
   };
 
+  const handleGoBack = () => {
+    router.push(`/classes/${brandId}`);
+  };
+
   return (
     <MainLayout
       title={classData ? `${classData.name} | FitBook` : "Class Details"}
@@ -84,11 +88,7 @@ export default function ClassDetailsPage() {
       {error ? (
         <div className="text-center py-10">
           <p className="text-destructive">Failed to load class details</p>
-          <Button
-            variant="outline"
-            className="mt-4"
-            onClick={() => router.back()}
-          >
+          <Button variant="outline" className="mt-4" onClick={handleGoBack}>
             Go Back
           </Button>
         </div>
@@ -310,7 +310,7 @@ export default function ClassDetailsPage() {
                                 className="mt-2"
                                 disabled={!isAvailable}
                                 onClick={() =>
-                                  router.push(`/book/${session._id}`)
+                                  router.push(`/book/${brandId}/${session._id}`)
                                 }
                               >
                                 {isAvailable ? "Book" : "Full"}

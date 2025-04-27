@@ -12,7 +12,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Calendar, Clock, User, Package, List } from "lucide-react";
 import LoadingSpinner from "@/components/ui/loading-spinner";
 import { format, parseISO, isSameDay } from "date-fns";
-
+const today = new Date();
+const tomorrow = new Date();
 export default function HomePage() {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const router = useRouter();
@@ -41,8 +42,7 @@ export default function HomePage() {
     useActiveBookings();
 
   // Fetch today's sessions
-  const today = new Date();
-  const tomorrow = new Date();
+
   tomorrow.setDate(today.getDate() + 1);
 
   const { data: sessionsData, isLoading: sessionsLoading } =
@@ -257,7 +257,11 @@ export default function HomePage() {
           <Button
             variant="outline"
             className="h-20 flex flex-col justify-center"
-            onClick={() => router.push("/classes")}
+            onClick={() =>
+              router.push(
+                activeBrandId ? `/classes/${activeBrandId}` : "/classes"
+              )
+            }
           >
             <List className="h-5 w-5 mb-2" />
             Browse Classes
@@ -265,7 +269,11 @@ export default function HomePage() {
           <Button
             variant="outline"
             className="h-20 flex flex-col justify-center"
-            onClick={() => router.push("/schedule")}
+            onClick={() =>
+              router.push(
+                activeBrandId ? `/schedule/${activeBrandId}` : "/schedule"
+              )
+            }
           >
             <Calendar className="h-5 w-5 mb-2" />
             Book Class
@@ -273,7 +281,11 @@ export default function HomePage() {
           <Button
             variant="outline"
             className="h-20 flex flex-col justify-center"
-            onClick={() => router.push("/packages")}
+            onClick={() =>
+              router.push(
+                activeBrandId ? `/packages/${activeBrandId}` : "/packages"
+              )
+            }
           >
             <Package className="h-5 w-5 mb-2" />
             View Packages
@@ -288,7 +300,6 @@ export default function HomePage() {
           </Button>
         </div>
       </section>
-
       {/* Facility Information (if available) */}
       {brandData?.address && (
         <section className="mt-8 pt-6 border-t border-border">

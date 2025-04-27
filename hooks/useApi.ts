@@ -122,13 +122,20 @@ const useAuthCheck = () => {
 };
 
 // Classes Queries
-export const useClassList = (businessType?: "fixed" | "hourly") => {
+export const useClassList = (
+  businessType?: "fixed" | "hourly",
+  brandId?: string
+) => {
   const authCheck = useAuthCheck();
 
   return useQuery({
-    queryKey: ["classes", { businessType }],
+    queryKey: ["classes", { businessType, brandId }],
     queryFn: async () => {
-      const response = await ClassesApi.getAllClasses(businessType);
+      const response = await ClassesApi.getAllClasses(
+        businessType,
+        undefined,
+        brandId
+      );
       // Filter to only show active classes
       const activeClasses = response.data.filter(
         (classItem: ClassData) => classItem.status === "active"
@@ -138,7 +145,6 @@ export const useClassList = (businessType?: "fixed" | "hourly") => {
     ...authCheck,
   });
 };
-
 export const useClassDetails = (classId: string) => {
   const authCheck = useAuthCheck();
 

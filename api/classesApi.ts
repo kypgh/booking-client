@@ -12,10 +12,12 @@ const ClassesApi = {
   // Get all classes
   getAllClasses: async (
     businessType?: "fixed" | "hourly",
-    status: string = "active" // Default to active classes
+    status: string = "active", // Default to active classes
+    brandId?: string // Optional brandId parameter
   ): Promise<ApiResponse<ClassData[]>> => {
     try {
-      let url = "/class?brandId=67bb00a19f5bc27ae88e5a53";
+      const brandIdParam = brandId;
+      let url = `/class?brandId=${brandIdParam}`;
 
       // Add businessType as a query parameter if provided
       if (businessType) {
@@ -32,7 +34,6 @@ const ClassesApi = {
       throw error;
     }
   },
-
   // Get class by ID
   getClassById: async (classId: string): Promise<ApiResponse<ClassData>> => {
     try {
