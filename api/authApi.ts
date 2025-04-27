@@ -28,10 +28,18 @@ const AuthApi = {
     brandId?: string
   ): Promise<LoginResponse> => {
     try {
-      const response = await agent.post(`/client/login?brandId=${brandId}`, {
-        email,
-        password,
-      });
+      const response = await agent.post(
+        `/client/login`,
+        {
+          email,
+          password,
+        },
+        {
+          params: brandId && {
+            brandId,
+          },
+        }
+      );
 
       // Store token and user data in localStorage
       if (response.data && response.data.token) {

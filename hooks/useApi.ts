@@ -6,6 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import InvitationApi, { InvitationData } from "@/api/invitationApi";
 import SessionsApi, { SessionDetail } from "@/api/sessionsApi";
 import AuthApi from "@/api/authApi";
+import BrandApi from "@/api/brandApi";
 
 // Types
 export interface Session {
@@ -360,6 +361,19 @@ export const useUserProfile = () => {
     queryKey: ["user", "profile"],
     queryFn: async () => {
       const response = await AuthApi.getCurrentUser();
+      return response.data;
+    },
+    ...authCheck,
+  });
+};
+
+export const getBrandInfo = (brandId: string) => {
+  const authCheck = useAuthCheck();
+
+  return useQuery({
+    queryKey: ["brand", "info"],
+    queryFn: async () => {
+      const response = await BrandApi.getInfoById(brandId);
       return response.data;
     },
     ...authCheck,
