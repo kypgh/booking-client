@@ -9,6 +9,8 @@ interface ApiResponse<T> {
 const BrandApi = {
   getInfoById: async (brandId: string): Promise<ApiResponse<any>> => {
     try {
+      console.log("here brandId", brandId);
+
       const response = await agent.get(`/brand/${brandId}`);
       return response;
     } catch (error) {

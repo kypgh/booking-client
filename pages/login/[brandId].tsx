@@ -5,6 +5,7 @@ import Head from "next/head";
 import { useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { getBrandInfo } from "@/hooks/useApi";
 
 // UI Components
 import { Button } from "@/components/ui/button";
@@ -30,8 +31,15 @@ export default function BrandLoginPage() {
   const router = useRouter();
   const { brandId } = router.query;
   const [isLoading, setIsLoading] = useState(false);
-  const [brandName, setBrandName] = useState("Loading...");
-  const [isBrandLoading, setIsBrandLoading] = useState(true);
+
+  // Fetch brand information
+  const {
+    data: brandData,
+    isLoading: isBrandLoading,
+    error: brandError,
+  } = getBrandInfo(brandId as string);
+
+  console.log(brandData);
 
   const {
     register,
@@ -45,32 +53,6 @@ export default function BrandLoginPage() {
       router.push("/");
     }
   }, [isAuthenticated, router]);
-
-  // Fetch brand information
-  useEffect(() => {
-    if (brandId && typeof brandId === "string") {
-      // This is just a placeholder - in reality, you'd fetch the brand name from your API
-      // For now, we'll simulate it with a timeout
-
-      const mockFetchBrand = () => {
-        // Mock brand data based on ID
-        const brandData = {
-          "67bb00a19f5bc27ae88e5a53": "FitBook Gym",
-          "67bb04529f5bc27ae88e5a54": "Yoga Studio",
-          "67bb04a19f5bc27ae88e5a55": "CrossFit Center",
-        };
-
-        setTimeout(() => {
-          setBrandName(
-            brandData[brandId as keyof typeof brandData] || "Unknown Brand"
-          );
-          setIsBrandLoading(false);
-        }, 500);
-      };
-
-      mockFetchBrand();
-    }
-  }, [brandId]);
 
   // Form submission handler
   const onSubmit = async (data: LoginFormData) => {
@@ -110,13 +92,37 @@ export default function BrandLoginPage() {
     );
   }
 
+  if (brandError) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+        <Card className="w-full max-w-md">
+          <CardContent className="pt-6 text-center">
+            <h2 className="text-xl font-semibold">Brand Not Found</h2>
+            <p className="mt-2 text-muted-foreground">
+              We couldn't find the specified brand. Please check the URL or
+              contact support.
+            </p>
+            <Link href="/">
+              <Button className="mt-4">Return to Home</Button>
+            </Link>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <>
       <Head>
         <title>
-          {isBrandLoading ? "Login" : `Login to ${brandName}`} | FitBook
+          {isBrandLoading
+            ? "Login"
+            : `Login to ${brandData?.name || "FitBook"}`}
         </title>
-        <meta name="description" content="Login to your FitBook account" />
+        <meta
+          name="description"
+          content={brandData?.description || "Login to your FitBook account"}
+        />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
 
@@ -129,10 +135,24 @@ export default function BrandLoginPage() {
               </div>
             ) : (
               <>
+                {brandData?.logo && (
+                  <div className="flex justify-center mb-4">
+                    <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
+                      <span className="text-2xl font-bold text-primary">
+                        {brandData.name.charAt(0)}
+                      </span>
+                    </div>
+                  </div>
+                )}
                 <CardTitle className="text-2xl font-bold text-primary">
-                  {brandName}
+                  {brandData?.name || "FitBook"}
                 </CardTitle>
-                <p className="text-sm text-muted-foreground">
+                {brandData?.description && (
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {brandData.description}
+                  </p>
+                )}
+                <p className="text-sm text-muted-foreground mt-2">
                   Enter your credentials to login
                 </p>
               </>
@@ -184,21 +204,51 @@ export default function BrandLoginPage() {
                 className="w-full"
                 disabled={isLoading || isBrandLoading}
               >
-                {isLoading ? "Logging in..." : "Login"}
+                {isLoading ? (
+                  <>
+                    <LoadingSpinner size="sm" className="mr-2" />
+                    Logging in...
+                  </>
+                ) : (
+                  "Login"
+                )}
               </Button>
             </form>
           </CardContent>
 
           <CardFooter className="flex flex-col space-y-4">
-            <div className="text-sm text-center text-muted-foreground">
-              Don't have an account?{" "}
-              <Link
-                href={`/register/${brandId}`}
-                className="text-primary hover:underline"
-              >
-                Register
-              </Link>
-            </div>
+            {!isBrandLoading && (
+              <>
+                <div className="text-sm text-center text-muted-foreground">
+                  Don't have an account?{" "}
+                  <Link
+                    href={`/register/${brandId}`}
+                    className="text-primary hover:underline"
+                  >
+                    Register
+                  </Link>
+                </div>
+                <div className="text-sm text-center">
+                  <Link
+                    href="/invitation"
+                    className="text-muted-foreground hover:text-primary hover:underline"
+                  >
+                    Check Invitation
+                  </Link>
+                </div>
+                {brandData?.contact && (
+                  <div className="text-xs text-center text-muted-foreground mt-4 pt-4 border-t border-border w-full">
+                    Need help? Contact us at{" "}
+                    <a
+                      href={`mailto:${brandData.contact.email || ""}`}
+                      className="text-primary"
+                    >
+                      {brandData.contact.email || "support@fitbook.com"}
+                    </a>
+                  </div>
+                )}
+              </>
+            )}
           </CardFooter>
         </Card>
       </div>

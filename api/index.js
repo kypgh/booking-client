@@ -5,6 +5,7 @@ import BookingsApi from "./bookingsApi";
 import PackagesApi from "./packagesApi";
 import InvitationApi from "./invitationApi";
 import SessionsApi from "./sessionsApi";
+import BrandApi from "./brandApi";
 
 // Export all APIs
 export {
@@ -15,6 +16,7 @@ export {
   PackagesApi,
   InvitationApi,
   SessionsApi,
+  BrandApi,
 };
 
 // Default export for convenience
@@ -26,4 +28,5 @@ export default {
   packages: PackagesApi,
   invitation: InvitationApi,
   sessions: SessionsApi,
+  brand: BrandApi,
 };

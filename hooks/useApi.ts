@@ -368,14 +368,11 @@ export const useUserProfile = () => {
 };
 
 export const getBrandInfo = (brandId: string) => {
-  const authCheck = useAuthCheck();
-
   return useQuery({
     queryKey: ["brand", "info"],
     queryFn: async () => {
       const response = await BrandApi.getInfoById(brandId);
       return response.data;
     },
-    ...authCheck,
   });
 };
