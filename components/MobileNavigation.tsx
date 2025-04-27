@@ -19,9 +19,9 @@ export default function MobileNavigation() {
     // If not in URL, try to get from user context
     else if (user && user.brands && user.brands.length > 0) {
       const brandId =
-        typeof user.brands[0] === "string"
-          ? user.brands[0]
-          : (user.brands[0] as any).id;
+        typeof user.brands[0]._id === "string"
+          ? user.brands[0]._id
+          : (user.brands[0] as any)._id;
       setActiveBrandId(brandId);
     }
   }, [router.query.brandId, user]);
@@ -29,7 +29,23 @@ export default function MobileNavigation() {
   // Helper function to determine if a link is active
   const isActive = (path: string) => {
     if (path === "/" && currentPath === "/") return true;
-    if (path !== "/" && currentPath.startsWith(path)) return true;
+
+    // Special case for home page with brandId
+    if (path.startsWith("/home/") && currentPath.startsWith("/home/"))
+      return true;
+
+    // Handle dynamic routes with brandId
+    if (path.includes("/classes/") && currentPath.includes("/classes/"))
+      return true;
+    if (path.includes("/schedule/") && currentPath.includes("/schedule/"))
+      return true;
+    if (path.includes("/packages/") && currentPath.includes("/packages/"))
+      return true;
+
+    // For non-dynamic routes
+    if (path === "/bookings" && currentPath === "/bookings") return true;
+    if (path === "/profile" && currentPath === "/profile") return true;
+
     return false;
   };
 
@@ -47,12 +63,12 @@ export default function MobileNavigation() {
         path: activeBrandId ? `/schedule/${activeBrandId}` : "/schedule",
         icon: Calendar,
       },
-      { label: "Bookings", path: "/bookings", icon: Clock },
       {
         label: "Packages",
         path: activeBrandId ? `/packages/${activeBrandId}` : "/packages",
         icon: Package,
       },
+      { label: "Bookings", path: "/bookings", icon: Clock },
       { label: "Profile", path: "/profile", icon: User },
     ];
   };

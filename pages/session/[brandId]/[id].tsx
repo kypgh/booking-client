@@ -1,6 +1,6 @@
-import React from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/router";
-import { format, parseISO, isAfter } from "date-fns";
+import { format, parseISO, isAfter, addMinutes } from "date-fns";
 import {
   Calendar,
   Clock,
@@ -12,24 +12,31 @@ import {
   X,
 } from "lucide-react";
 import MainLayout from "@/components/layouts/MainLayout";
-import { useQuery } from "@tanstack/react-query";
-import SessionsApi from "@/api/sessionsApi";
+import { useSessionDetailsByBrand } from "@/hooks/useApi";
+import { useCreateBookingWithBrand } from "@/hooks/useMutations";
+import { toast } from "react-hot-toast";
+
+// UI Components
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import LoadingSpinner from "@/components/ui/loading-spinner";
+import BookSessionDialog from "@/components/BookSessionDialog";
 import { useAuth } from "@/contexts/AuthContext";
-
-// Use our custom hook from useApi.ts
-import { useSessionDetails } from "@/hooks/useApi";
 
 export default function SessionDetailPage() {
   const router = useRouter();
-  const { id } = router.query;
+  const { brandId, id } = router.query;
   const { user } = useAuth();
+  const [isBookDialogOpen, setIsBookDialogOpen] = useState(false);
 
-  const { data: session, isLoading, error } = useSessionDetails(id as string);
+  // Use the session details hook with brandId
+  const {
+    data: session,
+    isLoading,
+    error,
+  } = useSessionDetailsByBrand(id as string, brandId as string);
 
   // Format time function
   const formatTime = (dateString: string) => {
@@ -67,9 +74,27 @@ export default function SessionDetailPage() {
     }
   };
 
+  // Calculate end time
+  const getEndTime = (startTimeString: string, durationMinutes: number) => {
+    if (!startTimeString) return "";
+
+    try {
+      const startTime = parseISO(startTimeString);
+      const endTime = addMinutes(startTime, durationMinutes);
+      return format(endTime, "h:mm a");
+    } catch (e) {
+      return "";
+    }
+  };
+
   // Function to handle booking
   const handleBookSession = () => {
-    router.push(`/book/${id}`);
+    setIsBookDialogOpen(true);
+  };
+
+  // Handle going back to classes or schedule
+  const handleBack = () => {
+    router.back();
   };
 
   return (
@@ -132,11 +157,7 @@ export default function SessionDetailPage() {
                     </span>
                     <p className="text-muted-foreground text-sm">
                       {formatTime(session.dateTime)} -{" "}
-                      {format(
-                        parseISO(session.dateTime).getTime() +
-                          session.duration * 60000,
-                        "h:mm a"
-                      )}
+                      {getEndTime(session.dateTime, session.duration)}
                     </p>
                   </div>
                 </div>
@@ -275,6 +296,28 @@ export default function SessionDetailPage() {
           )}
         </div>
       ) : null}
+
+      {/* Booking Dialog */}
+      {session && (
+        <BookSessionDialog
+          isOpen={isBookDialogOpen}
+          onClose={() => setIsBookDialogOpen(false)}
+          session={{
+            id: session._id,
+            dateTime: session.dateTime,
+            duration: session.duration,
+            class: {
+              id: session.class._id,
+              name: session.class.name,
+              instructor: {
+                id: session.class.instructor?._id,
+                name: session.class.instructor?.name,
+              },
+            },
+          }}
+          brandId={brandId as string}
+        />
+      )}
     </MainLayout>
   );
 }

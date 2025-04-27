@@ -7,6 +7,7 @@ import InvitationApi, { InvitationData } from "@/api/invitationApi";
 import SessionsApi, { SessionDetail } from "@/api/sessionsApi";
 import AuthApi from "@/api/authApi";
 import BrandApi from "@/api/brandApi";
+import ProfileApi from "@/api/profileApi";
 
 // Types
 export interface Session {
@@ -360,18 +361,18 @@ export const useSubscriptionPlans = (brandId: string) => {
   });
 };
 
-export const useUserProfile = () => {
-  const authCheck = useAuthCheck();
+// export const useUserProfile = () => {
+//   const authCheck = useAuthCheck();
 
-  return useQuery({
-    queryKey: ["user", "profile"],
-    queryFn: async () => {
-      const response = await AuthApi.getCurrentUser();
-      return response.data;
-    },
-    ...authCheck,
-  });
-};
+//   return useQuery({
+//     queryKey: ["user", "profile"],
+//     queryFn: async () => {
+//       const response = await AuthApi.getCurrentUser();
+//       return response.data;
+//     },
+//     ...authCheck,
+//   });
+// };
 
 export const getBrandInfo = (brandId: string) => {
   return useQuery({
@@ -380,5 +381,42 @@ export const getBrandInfo = (brandId: string) => {
       const response = await BrandApi.getInfoById(brandId);
       return response.data;
     },
+  });
+};
+
+export const useUserProfile = () => {
+  const authCheck = useAuthCheck();
+
+  return useQuery({
+    queryKey: ["user", "profile"],
+    queryFn: async () => {
+      try {
+        const response = await ProfileApi.getProfile();
+        return response.data;
+      } catch (error) {
+        console.error("Error fetching user profile:", error);
+        throw error;
+      }
+    },
+    ...authCheck,
+  });
+};
+
+// Add these hooks to your useApi.ts file
+
+// Session hook for getting session details with brandId
+export const useSessionDetailsByBrand = (
+  sessionId: string,
+  brandId: string
+) => {
+  const authCheck = useAuthCheck();
+
+  return useQuery({
+    queryKey: ["sessions", brandId, sessionId],
+    queryFn: async () => {
+      const response = await SessionsApi.getSessionById(sessionId, brandId);
+      return response.data as SessionDetail;
+    },
+    enabled: !!sessionId && !!brandId && authCheck.enabled,
   });
 };

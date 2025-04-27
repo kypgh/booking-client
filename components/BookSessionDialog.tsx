@@ -3,7 +3,7 @@ import { useRouter } from "next/router";
 import { format } from "date-fns";
 import { useAuth } from "@/contexts/AuthContext";
 import { useActivePackages } from "@/hooks/useApi";
-import { useCreateBooking } from "@/hooks/useMutations";
+import { useCreateBookingWithBrand } from "@/hooks/useMutations";
 import { toast } from "react-hot-toast";
 
 // UI Components
@@ -51,6 +51,7 @@ const BookSessionDialog: React.FC<BookSessionDialogProps> = ({
   isOpen,
   onClose,
   session,
+  brandId,
 }) => {
   const [bookingMethod, setBookingMethod] =
     useState<BookingMethod>("individual");
@@ -62,8 +63,8 @@ const BookSessionDialog: React.FC<BookSessionDialogProps> = ({
   // Get active packages for the user
   const { data: packages, isLoading: packagesLoading } = useActivePackages();
 
-  // Create booking mutation
-  const { mutate: createBooking } = useCreateBooking();
+  // Use the enhanced booking mutation that supports brandId
+  const { mutate: createBooking } = useCreateBookingWithBrand();
 
   // Reset state when dialog opens
   useEffect(() => {
@@ -91,7 +92,7 @@ const BookSessionDialog: React.FC<BookSessionDialogProps> = ({
       bookingType: bookingMethod as BookingMethod,
       packageBookingId:
         bookingMethod === "monthly" ? selectedPackage : undefined,
-      // No need to add client here - it will be added in the mutation
+      brandId, // Include brandId in the booking data
     };
 
     createBooking(bookingData, {

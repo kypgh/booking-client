@@ -74,11 +74,10 @@ export default function LoginPage() {
 
   // Handle brand selection
   const handleSelectBrand = (brandId: string) => {
-    router.push("/");
+    router.push(`/home/${brandId}`);
   };
 
-  // If showing brand selection after login
-  if (showBrandSelection) {
+  if (showBrandSelection)
     return (
       <>
         <Head>
@@ -102,19 +101,36 @@ export default function LoginPage() {
               <CardContent>
                 {brands.length > 0 ? (
                   <div className="space-y-3">
-                    {brands.map((brand: any) => (
+                    {brands.map((brand) => (
                       <Card
-                        key={brand.id || brand._id}
+                        key={brand._id || brand.id}
                         className="hover:border-primary/50 transition-colors cursor-pointer"
-                        onClick={() => handleSelectBrand(brand.id || brand._id)}
+                        onClick={() => handleSelectBrand(brand._id || brand.id)}
                       >
                         <CardContent className="p-4">
-                          <h3 className="font-medium">{brand.name}</h3>
-                          {brand.description && (
-                            <p className="text-sm text-muted-foreground mt-1">
-                              {brand.description}
-                            </p>
-                          )}
+                          <div className="flex items-center">
+                            {brand.logo ? (
+                              <div className="w-10 h-10 mr-3 rounded-full overflow-hidden">
+                                <img
+                                  src={brand.logo}
+                                  alt={brand.name}
+                                  className="w-full h-full object-cover"
+                                />
+                              </div>
+                            ) : (
+                              <div className="w-10 h-10 mr-3 bg-primary/10 rounded-full flex items-center justify-center text-primary font-semibold">
+                                {brand.name.charAt(0)}
+                              </div>
+                            )}
+                            <div>
+                              <h3 className="font-medium">{brand.name}</h3>
+                              {brand.description && (
+                                <p className="text-sm text-muted-foreground mt-1">
+                                  {brand.description}
+                                </p>
+                              )}
+                            </div>
+                          </div>
                         </CardContent>
                       </Card>
                     ))}
@@ -133,7 +149,6 @@ export default function LoginPage() {
         </div>
       </>
     );
-  }
 
   // Normal login form
   return (

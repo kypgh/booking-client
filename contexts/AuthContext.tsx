@@ -8,15 +8,26 @@ import React, {
 import { useRouter } from "next/router";
 import AuthApi from "../api/authApi";
 
-// Define types for user data
+// Brand interface to define the structure of brand objects
+export interface Brand {
+  id?: string;
+  _id?: string;
+  name: string;
+  logo?: string;
+  description?: string;
+  status?: string;
+  [key: string]: any;
+}
+
+// Updated User interface to handle brand objects
 export interface User {
   id?: string;
   _id?: string;
   name: string;
   email: string;
   status?: string;
-  brands?: string[]; // Add brands property for multi-brand support
-  primaryBrand?: string; // Add primaryBrand property
+  brands?: Brand[]; // Updated to array of Brand objects
+  primaryBrand?: Brand | string; // Can be either a Brand object or a brand ID string
   [key: string]: any; // For any additional properties
 }
 

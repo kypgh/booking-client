@@ -56,10 +56,16 @@ interface NotesUpdate {
 const SessionsApi = {
   // Get session details by ID
   getSessionById: async (
-    sessionId: string
+    sessionId: string,
+    brandId?: string // Added brandId parameter
   ): Promise<ApiResponse<SessionDetail>> => {
     try {
-      const response = await agent.get(`/session/${sessionId}/details`);
+      // Use brandId in the URL if provided
+      const url = brandId
+        ? `/session/${sessionId}/details`
+        : `/session/${sessionId}/details`;
+
+      const response = await agent.get(url);
       return response;
     } catch (error) {
       console.error("Get session details error:", error);
@@ -70,13 +76,15 @@ const SessionsApi = {
   // Update session attendance (for instructors/staff)
   updateAttendance: async (
     sessionId: string,
-    data: AttendanceUpdate
+    data: AttendanceUpdate,
+    brandId?: string
   ): Promise<ApiResponse<any>> => {
     try {
-      const response = await agent.post(
-        `/session/${sessionId}/attendance`,
-        data
-      );
+      const url = brandId
+        ? `/session/${sessionId}/attendance`
+        : `/session/${sessionId}/attendance`;
+
+      const response = await agent.post(url, data);
       return response;
     } catch (error) {
       console.error("Update attendance error:", error);
@@ -87,10 +95,15 @@ const SessionsApi = {
   // Update session notes (for instructors/staff)
   updateNotes: async (
     sessionId: string,
-    data: NotesUpdate
+    data: NotesUpdate,
+    brandId?: string
   ): Promise<ApiResponse<any>> => {
     try {
-      const response = await agent.post(`/session/${sessionId}/notes`, data);
+      const url = brandId
+        ? `/session/${sessionId}/notes`
+        : `/session/${sessionId}/notes`;
+
+      const response = await agent.post(url, data);
       return response;
     } catch (error) {
       console.error("Update notes error:", error);
@@ -99,9 +112,16 @@ const SessionsApi = {
   },
 
   // Get session attendees (for instructors/staff)
-  getSessionAttendees: async (sessionId: string): Promise<ApiResponse<any>> => {
+  getSessionAttendees: async (
+    sessionId: string,
+    brandId?: string
+  ): Promise<ApiResponse<any>> => {
     try {
-      const response = await agent.get(`/session/${sessionId}/attendees`);
+      const url = brandId
+        ? `/session/${sessionId}/attendees`
+        : `/session/${sessionId}/attendees`;
+
+      const response = await agent.get(url);
       return response;
     } catch (error) {
       console.error("Get session attendees error:", error);

@@ -3,6 +3,7 @@ import BookingsApi from "@/api/bookingsApi";
 import PackagesApi from "@/api/packagesApi";
 import InvitationApi from "@/api/invitationApi";
 import { useAuth } from "@/contexts/AuthContext";
+import ProfileApi, { ProfileUpdateData } from "@/api/profileApi";
 
 // Types
 export interface BookingRequest {
@@ -182,6 +183,93 @@ export const usePurchaseSubscription = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["subscriptions"] });
+    },
+  });
+};
+
+// Profile Mutations
+export const useUpdateProfile = () => {
+  const queryClient = useQueryClient();
+  const { refreshUserData } = useAuth();
+
+  return useMutation({
+    mutationFn: async (profileData: ProfileUpdateData) => {
+      const response = await ProfileApi.updateProfile(profileData);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["user", "profile"] });
+      // Refresh user data in auth context to update name if changed
+      refreshUserData();
+    },
+  });
+};
+
+export const useUpdatePassword = () => {
+  return useMutation({
+    mutationFn: async (passwordData: {
+      currentPassword: string;
+      newPassword: string;
+      confirmPassword: string;
+    }) => {
+      const response = await ProfileApi.updatePassword(passwordData);
+      return response;
+    },
+  });
+};
+
+// Booking a session with brandId context
+export const useCreateBookingWithBrand = () => {
+  const queryClient = useQueryClient();
+  const { user } = useAuth(); // Get current user context
+
+  return useMutation({
+    mutationFn: async ({
+      sessionId,
+      bookingType,
+      packageBookingId,
+      brandId,
+    }: BookingRequest & { brandId?: string }) => {
+      let response;
+
+      switch (bookingType) {
+        case "subscription":
+          response = await BookingsApi.createSubscriptionBooking(sessionId);
+          break;
+        case "monthly":
+          if (!packageBookingId) {
+            throw new Error(
+              "Package booking ID is required for monthly bookings"
+            );
+          }
+          response = await BookingsApi.createPackageBooking(
+            packageBookingId,
+            sessionId
+          );
+          break;
+        case "individual":
+          response = await BookingsApi.createBooking({
+            session: sessionId,
+            bookingType: bookingType,
+            client: user?.id, // Include the client ID from auth context
+          });
+          break;
+      }
+
+      return response.data;
+    },
+    onSuccess: (_, variables) => {
+      // Invalidate relevant queries
+      queryClient.invalidateQueries({ queryKey: ["bookings", "active"] });
+      queryClient.invalidateQueries({ queryKey: ["sessions", "available"] });
+      queryClient.invalidateQueries({ queryKey: ["packages", "active"] });
+
+      // Also invalidate the specific session query if brandId is provided
+      if (variables.brandId) {
+        queryClient.invalidateQueries({
+          queryKey: ["sessions", variables.brandId, variables.sessionId],
+        });
+      }
     },
   });
 };

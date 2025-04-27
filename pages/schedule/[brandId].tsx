@@ -19,14 +19,17 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import LoadingSpinner from "@/components/ui/loading-spinner";
 import BookSessionDialog from "@/components/BookSessionDialog";
+import { useScheduleState } from "@/hooks/useScheduleState";
 
 export default function SchedulePage() {
   const { isAuthenticated, isLoading: authLoading } = useAuth();
   const router = useRouter();
   const { brandId } = router.query;
 
-  const [currentDate, setCurrentDate] = useState(new Date());
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  // Use our custom hook to persist state between navigations
+  const { currentDate, selectedDate, setCurrentDate, setSelectedDate } =
+    useScheduleState(brandId as string);
+
   const [isBookingDialogOpen, setIsBookingDialogOpen] = useState(false);
   const [selectedSession, setSelectedSession] = useState<any>(null);
 
@@ -57,14 +60,12 @@ export default function SchedulePage() {
 
   // Navigate to previous week
   const goToPreviousWeek = () => {
-    setCurrentDate((prev) => addDays(prev, -7));
-    setSelectedDate(null);
+    setCurrentDate(addDays(currentDate, -7));
   };
 
   // Navigate to next week
   const goToNextWeek = () => {
-    setCurrentDate((prev) => addDays(prev, 7));
-    setSelectedDate(null);
+    setCurrentDate(addDays(currentDate, 7));
   };
 
   // Select a date
