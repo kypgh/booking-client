@@ -1,5 +1,6 @@
+// components/PricingCard.tsx
 import React from "react";
-import { Check, X } from "lucide-react";
+import { Check, X, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -23,6 +24,7 @@ interface PricingCardProps {
   badge?: string;
   onPurchase: () => void;
   isLoading?: boolean;
+  alreadyOwned?: boolean; // New prop
 }
 
 const PricingCard: React.FC<PricingCardProps> = ({
@@ -33,6 +35,7 @@ const PricingCard: React.FC<PricingCardProps> = ({
   badge,
   onPurchase,
   isLoading = false,
+  alreadyOwned = false,
 }) => {
   return (
     <Card className="flex flex-col h-full">
@@ -71,9 +74,20 @@ const PricingCard: React.FC<PricingCardProps> = ({
         </ul>
       </CardContent>
       <CardFooter className="pt-2 mt-auto">
-        <Button onClick={onPurchase} disabled={isLoading} className="w-full">
-          {isLoading ? "Processing..." : "Purchase"}
-        </Button>
+        {alreadyOwned ? (
+          <Button
+            variant="outline"
+            className="w-full text-primary border-primary/30"
+            disabled
+          >
+            <CheckCircle className="mr-2 h-4 w-4" />
+            Already Purchased
+          </Button>
+        ) : (
+          <Button onClick={onPurchase} disabled={isLoading} className="w-full">
+            {isLoading ? "Processing..." : "Purchase"}
+          </Button>
+        )}
       </CardFooter>
     </Card>
   );

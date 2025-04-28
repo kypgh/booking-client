@@ -1,10 +1,12 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import MainLayout from "@/components/layouts/MainLayout";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   useAvailablePackages,
   useSubscriptionPlans,
+  useActivePackages,
+  useOwnedPackages,
   PackageData,
   SubscriptionPlan,
 } from "@/hooks/useApi";
@@ -19,6 +21,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import PricingCard from "@/components/PricingCard";
 import PurchaseConfirmDialog from "@/components/PurchaseConfirmDialog";
 import LoadingSpinner from "@/components/ui/loading-spinner";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import { format } from "date-fns";
+import { Package, CreditCard, CalendarClock } from "lucide-react";
 
 export default function PackagesPage() {
   const { isAuthenticated, isLoading: authLoading } = useAuth();
@@ -48,6 +55,17 @@ export default function PackagesPage() {
     error: subscriptionPlansError,
   } = useSubscriptionPlans(brandId as string);
 
+  // Fetch active packages for the client
+  const {
+    data: activePackages,
+    isLoading: activePackagesLoading,
+    error: activePackagesError,
+  } = useActivePackages();
+
+  // Get a list of owned package IDs
+  const { data: ownedPackageIds, isLoading: ownedPackagesLoading } =
+    useOwnedPackages();
+
   // Purchase mutations
   const { mutate: purchasePackage, isPending: isPurchasingPackage } =
     usePurchasePackage();
@@ -55,7 +73,7 @@ export default function PackagesPage() {
     usePurchaseSubscription();
 
   // If not authenticated, redirect to login
-  React.useEffect(() => {
+  useEffect(() => {
     if (!authLoading && !isAuthenticated) {
       router.push("/login");
     }
@@ -144,7 +162,6 @@ export default function PackagesPage() {
       },
     ];
 
-    // Add frequency limit feature if present
     if (sub.frequencyLimit) {
       features.push({
         included: true,
@@ -157,7 +174,6 @@ export default function PackagesPage() {
       });
     }
 
-    // Add specific classes info if not allowing all classes
     if (!sub.allowAllClasses && sub.includedClasses.length > 0) {
       features.push({
         included: true,
@@ -165,7 +181,6 @@ export default function PackagesPage() {
       });
     }
 
-    // Additional features based on price
     features.push({
       included: sub.price >= 100,
       text: "Premium member benefits",
@@ -174,11 +189,17 @@ export default function PackagesPage() {
     return features;
   };
 
+  // Check if a package is already owned
+  const isPackageOwned = (packageId: string): boolean => {
+    if (!ownedPackageIds) return false;
+    return ownedPackageIds.includes(packageId);
+  };
+
   const isLoading = authLoading || !brandId;
 
   if (isLoading) {
     return (
-      <MainLayout title="Packages & Subscriptions | FitBook" loading={true}>
+      <MainLayout title="Membership Options | FitBook" loading={true}>
         <LoadingSpinner />
       </MainLayout>
     );
@@ -186,30 +207,36 @@ export default function PackagesPage() {
 
   return (
     <MainLayout
-      title="Packages & Subscriptions | FitBook"
-      headerTitle="Packages & Subscriptions"
+      title="Membership Options | FitBook"
+      headerTitle="Membership Options"
     >
       <div className="space-y-6">
         <div className="text-center mb-6">
           <h1 className="text-2xl font-bold">Choose Your Plan</h1>
           <p className="text-muted-foreground mt-2">
-            Select a package or subscription that best fits your fitness needs
+            Select a membership option that best fits your fitness needs
           </p>
         </div>
 
-        <Tabs defaultValue="packages">
+        <Tabs defaultValue="credits">
           <TabsList className="w-full mb-6">
-            <TabsTrigger value="packages" className="flex-1">
+            <TabsTrigger value="credits" className="flex-1">
+              <Package className="h-4 w-4 mr-2" />
               Credit Packages
             </TabsTrigger>
             <TabsTrigger value="subscriptions" className="flex-1">
+              <CalendarClock className="h-4 w-4 mr-2" />
               Subscriptions
+            </TabsTrigger>
+            <TabsTrigger value="myplans" className="flex-1">
+              <CreditCard className="h-4 w-4 mr-2" />
+              My Plans
             </TabsTrigger>
           </TabsList>
 
-          {/* Packages Tab */}
-          <TabsContent value="packages">
-            {packagesLoading ? (
+          {/* Credit Packages Tab */}
+          <TabsContent value="credits">
+            {packagesLoading || ownedPackagesLoading ? (
               <div className="flex justify-center py-8">
                 <LoadingSpinner size="lg" />
               </div>
@@ -218,22 +245,37 @@ export default function PackagesPage() {
                 <p>Error loading packages. Please try again.</p>
               </div>
             ) : packages && packages.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {packages.map((pkg) => (
-                  <PricingCard
-                    key={pkg._id}
-                    title={pkg.name}
-                    description={pkg.description}
-                    price={pkg.price}
-                    features={getPackageFeatures(pkg)}
-                    badge={pkg.credits >= 20 ? "Popular" : undefined}
-                    onPurchase={() => handleOpenPurchaseDialog(pkg, "package")}
-                    isLoading={
-                      isPurchasingPackage && selectedItem?._id === pkg._id
-                    }
-                  />
-                ))}
-              </div>
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {packages.map((pkg) => (
+                    <PricingCard
+                      key={pkg._id}
+                      title={pkg.name}
+                      description={pkg.description}
+                      price={pkg.price}
+                      features={getPackageFeatures(pkg)}
+                      badge={pkg.credits >= 20 ? "Popular" : undefined}
+                      onPurchase={() =>
+                        handleOpenPurchaseDialog(pkg, "package")
+                      }
+                      isLoading={
+                        isPurchasingPackage && selectedItem?._id === pkg._id
+                      }
+                      alreadyOwned={isPackageOwned(pkg._id)}
+                    />
+                  ))}
+                </div>
+
+                <div className="mt-8 p-4 bg-accent/30 rounded-lg">
+                  <h3 className="font-medium mb-2">How Credit Packages Work</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Purchase credit packages to book individual classes. Each
+                    package contains a set number of credits that can be used to
+                    book classes. Credits are valid for a specific period and
+                    can be used for any available class.
+                  </p>
+                </div>
+              </>
             ) : (
               <div className="text-center py-8 text-muted-foreground">
                 <p>No packages available at this time.</p>
@@ -252,56 +294,206 @@ export default function PackagesPage() {
                 <p>Error loading subscription plans. Please try again.</p>
               </div>
             ) : subscriptionPlans && subscriptionPlans.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {subscriptionPlans.map((plan) => (
-                  <PricingCard
-                    key={plan.id}
-                    title={plan.name}
-                    description={plan.description}
-                    price={plan.price}
-                    features={getSubscriptionFeatures(plan)}
-                    badge={plan.allowAllClasses ? "Unlimited" : undefined}
-                    onPurchase={() =>
-                      handleOpenPurchaseDialog(plan, "subscription")
-                    }
-                    isLoading={
-                      isPurchasingSubscription && selectedItem?.id === plan.id
-                    }
-                  />
-                ))}
-              </div>
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {subscriptionPlans.map((plan) => (
+                    <PricingCard
+                      key={plan.id}
+                      title={plan.name}
+                      description={plan.description}
+                      price={plan.price}
+                      features={getSubscriptionFeatures(plan)}
+                      badge={plan.allowAllClasses ? "Unlimited" : undefined}
+                      onPurchase={() =>
+                        handleOpenPurchaseDialog(plan, "subscription")
+                      }
+                      isLoading={
+                        isPurchasingSubscription && selectedItem?.id === plan.id
+                      }
+                    />
+                  ))}
+                </div>
+
+                <div className="mt-8 p-4 bg-accent/30 rounded-lg">
+                  <h3 className="font-medium mb-2">How Subscriptions Work</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Subscribe for regular access to classes with our monthly
+                    membership plans. Choose between plans with different class
+                    access and frequency limits. Subscriptions automatically
+                    renew until cancelled.
+                  </p>
+                </div>
+              </>
             ) : (
               <div className="text-center py-8 text-muted-foreground">
                 <p>No subscription plans available at this time.</p>
               </div>
             )}
           </TabsContent>
-        </Tabs>
 
-        {/* Info Section */}
-        <div className="border-t pt-6 mt-12">
-          <h2 className="text-lg font-semibold mb-4">
-            About Our Membership Options
-          </h2>
-          <div className="space-y-4 text-sm">
-            <div>
-              <h3 className="font-medium">Credit Packages</h3>
-              <p className="text-muted-foreground">
-                Purchase credit packages to book individual classes. Credits are
-                valid for a specific period and can be used for any available
-                class.
-              </p>
-            </div>
-            <div>
-              <h3 className="font-medium">Subscriptions</h3>
-              <p className="text-muted-foreground">
-                Subscribe for regular access to classes with our monthly
-                membership plans. Choose between plans with different class
-                access and frequency limits.
-              </p>
-            </div>
-          </div>
-        </div>
+          {/* My Plans Tab */}
+          <TabsContent value="myplans">
+            {activePackagesLoading ? (
+              <div className="flex justify-center py-8">
+                <LoadingSpinner size="lg" />
+              </div>
+            ) : activePackagesError ? (
+              <div className="text-center py-8 text-destructive">
+                <p>Error loading your packages. Please try again.</p>
+              </div>
+            ) : activePackages && activePackages.length > 0 ? (
+              <div className="space-y-6">
+                <h3 className="text-lg font-medium mb-2">
+                  Your Active Packages
+                </h3>
+                <div className="grid gap-6 md:grid-cols-2">
+                  {activePackages.map((pkg) => (
+                    <Card key={pkg._id} className="overflow-hidden">
+                      <CardHeader className="pb-2 bg-accent/20">
+                        <CardTitle className="flex justify-between items-center">
+                          <span>{pkg.package.name}</span>
+                          <span className="text-sm bg-primary/10 text-primary px-2 py-1 rounded-full">
+                            {pkg.remainingCredits} / {pkg.initialCredits}{" "}
+                            credits
+                          </span>
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="p-4">
+                        <div className="space-y-4">
+                          <div>
+                            <div className="flex justify-between text-sm mb-1">
+                              <span className="text-muted-foreground">
+                                Credits Remaining
+                              </span>
+                              <span>
+                                {Math.round(
+                                  (pkg.remainingCredits / pkg.initialCredits) *
+                                    100
+                                )}
+                                %
+                              </span>
+                            </div>
+                            <Progress
+                              value={
+                                (pkg.remainingCredits / pkg.initialCredits) *
+                                100
+                              }
+                              className="h-2"
+                            />
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-4 text-sm">
+                            <div>
+                              <p className="text-muted-foreground">Purchased</p>
+                              <p>
+                                {format(new Date(pkg.startDate), "MMM d, yyyy")}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-muted-foreground">Expires</p>
+                              <p className="font-medium">
+                                {format(
+                                  new Date(pkg.expiryDate),
+                                  "MMM d, yyyy"
+                                )}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="mt-2 flex justify-center">
+                            <Button
+                              onClick={() => router.push("/schedule")}
+                              className="w-full"
+                              size="sm"
+                            >
+                              Book a Class
+                            </Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+
+                <Card className="mt-4">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base">
+                      Package Usage Tips
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-4">
+                    <ul className="space-y-2 text-sm">
+                      <li className="flex items-start">
+                        <span className="bg-primary/20 text-primary rounded-full w-5 h-5 flex items-center justify-center text-xs mr-2 mt-0.5">
+                          1
+                        </span>
+                        <span>
+                          When booking a class, select "Use Package Credits" to
+                          use your package.
+                        </span>
+                      </li>
+                      <li className="flex items-start">
+                        <span className="bg-primary/20 text-primary rounded-full w-5 h-5 flex items-center justify-center text-xs mr-2 mt-0.5">
+                          2
+                        </span>
+                        <span>
+                          Remember to use your credits before they expire.
+                        </span>
+                      </li>
+                      <li className="flex items-start">
+                        <span className="bg-primary/20 text-primary rounded-full w-5 h-5 flex items-center justify-center text-xs mr-2 mt-0.5">
+                          3
+                        </span>
+                        <span>
+                          View your bookings in the "Bookings" tab to track your
+                          package usage.
+                        </span>
+                      </li>
+                    </ul>
+                  </CardContent>
+                </Card>
+              </div>
+            ) : (
+              <div className="text-center py-10">
+                <div className="mx-auto w-16 h-16 bg-muted/30 rounded-full flex items-center justify-center mb-4">
+                  <Package className="h-8 w-8 text-muted-foreground" />
+                </div>
+                <h3 className="text-lg font-medium mb-2">No Active Packages</h3>
+                <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+                  You don't have any active packages or subscriptions. Purchase
+                  a package to start booking classes.
+                </p>
+                <div className="flex gap-4 justify-center">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      const element = document.querySelector(
+                        '[data-value="credits"]'
+                      );
+                      if (element instanceof HTMLElement) {
+                        element.click();
+                      }
+                    }}
+                  >
+                    View Credit Packages
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      const element = document.querySelector(
+                        '[data-value="subscriptions"]'
+                      );
+                      if (element instanceof HTMLElement) {
+                        element.click();
+                      }
+                    }}
+                  >
+                    View Subscriptions
+                  </Button>
+                </div>
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
       </div>
 
       {/* Purchase Confirmation Dialog */}

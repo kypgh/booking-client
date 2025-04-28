@@ -420,3 +420,32 @@ export const useSessionDetailsByBrand = (
     enabled: !!sessionId && !!brandId && authCheck.enabled,
   });
 };
+
+// Add this hook to hooks/useApi.ts
+export const usePackageOwnership = (packageId: string) => {
+  const authCheck = useAuthCheck();
+
+  return useQuery({
+    queryKey: ["packages", "ownership", packageId],
+    queryFn: async () => {
+      const response = await PackagesApi.checkPackageOwnership(packageId);
+      return response.data.ownsPackage;
+    },
+    enabled: !!packageId && authCheck.enabled,
+  });
+};
+
+// Add this hook to get all owned packages
+export const useOwnedPackages = () => {
+  const authCheck = useAuthCheck();
+
+  return useQuery({
+    queryKey: ["packages", "owned"],
+    queryFn: async () => {
+      const response = await PackagesApi.getActivePackages();
+      // Return a list of package IDs
+      return response.data.map((pkg: any) => pkg.package._id);
+    },
+    ...authCheck,
+  });
+};

@@ -187,6 +187,19 @@ const PackagesApi = {
       throw error;
     }
   },
+  checkPackageOwnership: async (
+    packageId: string
+  ): Promise<ApiResponse<{ ownsPackage: boolean }>> => {
+    try {
+      const response = await agent.post("/package/check-ownership", {
+        packageId,
+      });
+      return response;
+    } catch (error) {
+      console.error("Check package ownership error:", error);
+      throw error;
+    }
+  },
 };
 
 export default PackagesApi;
