@@ -4,6 +4,7 @@ import PackagesApi from "@/api/packagesApi";
 import InvitationApi from "@/api/invitationApi";
 import { useAuth } from "@/contexts/AuthContext";
 import ProfileApi, { ProfileUpdateData } from "@/api/profileApi";
+import { useBrand } from "@/contexts/BrandContext";
 
 // Types
 export interface BookingRequest {
@@ -38,6 +39,7 @@ export interface SubscriptionPurchaseRequest {
 
 export const useCancelBooking = () => {
   const queryClient = useQueryClient();
+  const { activeBrandId } = useBrand();
 
   return useMutation({
     mutationFn: async (bookingId: string) => {
@@ -45,7 +47,7 @@ export const useCancelBooking = () => {
       return response;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["bookings"] });
+      queryClient.invalidateQueries({ queryKey: ["bookings", activeBrandId] });
       queryClient.invalidateQueries({ queryKey: ["sessions", "available"] });
     },
   });
@@ -53,6 +55,7 @@ export const useCancelBooking = () => {
 
 export const useCancelPackageBooking = () => {
   const queryClient = useQueryClient();
+  const { activeBrandId } = useBrand();
 
   return useMutation({
     mutationFn: async ({
@@ -69,8 +72,8 @@ export const useCancelPackageBooking = () => {
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["bookings"] });
-      queryClient.invalidateQueries({ queryKey: ["packages"] });
+      queryClient.invalidateQueries({ queryKey: ["bookings", activeBrandId] });
+      queryClient.invalidateQueries({ queryKey: ["packages", activeBrandId] });
       queryClient.invalidateQueries({ queryKey: ["sessions", "available"] });
     },
   });
@@ -79,6 +82,7 @@ export const useCancelPackageBooking = () => {
 // Package Mutations
 export const usePurchasePackage = () => {
   const queryClient = useQueryClient();
+  const { activeBrandId } = useBrand();
 
   return useMutation({
     mutationFn: async ({ packageId, paymentData }: PackagePurchaseRequest) => {
@@ -89,7 +93,9 @@ export const usePurchasePackage = () => {
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["packages", "active"] });
+      queryClient.invalidateQueries({
+        queryKey: ["packages", "active", activeBrandId],
+      });
     },
   });
 };
@@ -120,7 +126,8 @@ export const useAcceptInvitation = () => {
 
 export const useCreateBooking = () => {
   const queryClient = useQueryClient();
-  const { user } = useAuth(); // Get current user context
+  const { user } = useAuth();
+  const { activeBrandId } = useBrand();
 
   return useMutation({
     mutationFn: async (data: BookingRequest) => {
@@ -147,7 +154,8 @@ export const useCreateBooking = () => {
           response = await BookingsApi.createBooking({
             session: data.sessionId,
             bookingType: data.bookingType,
-            client: user?.id, // Include the client ID from auth context
+            client: user?.id,
+            brandId: activeBrandId, // Include active brandId
           });
           break;
       }
@@ -156,15 +164,20 @@ export const useCreateBooking = () => {
     },
     onSuccess: () => {
       // Invalidate relevant queries
-      queryClient.invalidateQueries({ queryKey: ["bookings", "active"] });
+      queryClient.invalidateQueries({
+        queryKey: ["bookings", "active", activeBrandId],
+      });
       queryClient.invalidateQueries({ queryKey: ["sessions", "available"] });
-      queryClient.invalidateQueries({ queryKey: ["packages", "active"] });
+      queryClient.invalidateQueries({
+        queryKey: ["packages", "active", activeBrandId],
+      });
     },
   });
 };
 
 export const usePurchaseSubscription = () => {
   const queryClient = useQueryClient();
+  const { activeBrandId } = useBrand();
 
   return useMutation({
     mutationFn: async ({
@@ -173,16 +186,21 @@ export const usePurchaseSubscription = () => {
       paymentMethod,
       transactionId,
     }: SubscriptionPurchaseRequest) => {
+      // Use provided brandId or fall back to active brandId
+      const effectiveBrandId = brandId || activeBrandId;
+
       const response = await PackagesApi.purchaseSubscription(
         planId,
-        brandId,
+        effectiveBrandId,
         paymentMethod,
         transactionId
       );
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["subscriptions"] });
+      queryClient.invalidateQueries({
+        queryKey: ["subscriptions", activeBrandId],
+      });
     },
   });
 };
@@ -221,7 +239,8 @@ export const useUpdatePassword = () => {
 // Booking a session with brandId context
 export const useCreateBookingWithBrand = () => {
   const queryClient = useQueryClient();
-  const { user } = useAuth(); // Get current user context
+  const { user } = useAuth();
+  const { activeBrandId } = useBrand();
 
   return useMutation({
     mutationFn: async ({
@@ -231,6 +250,8 @@ export const useCreateBookingWithBrand = () => {
       brandId,
     }: BookingRequest & { brandId?: string }) => {
       let response;
+      // Use provided brandId or fallback to active brandId
+      const effectiveBrandId = brandId || activeBrandId;
 
       switch (bookingType) {
         case "subscription":
@@ -251,7 +272,8 @@ export const useCreateBookingWithBrand = () => {
           response = await BookingsApi.createBooking({
             session: sessionId,
             bookingType: bookingType,
-            client: user?.id, // Include the client ID from auth context
+            client: user?.id,
+            brandId: effectiveBrandId,
           });
           break;
       }

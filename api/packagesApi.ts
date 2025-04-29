@@ -168,7 +168,7 @@ const PackagesApi = {
   // Purchase a subscription
   purchaseSubscription: async (
     planId: string,
-    brandId: string,
+    brandId: string | null,
     paymentMethod: string = "credit_card",
     transactionId?: string
   ): Promise<ApiResponse<any>> => {

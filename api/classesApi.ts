@@ -81,7 +81,7 @@ const ClassesApi = {
     filters: {
       startDate?: string;
       endDate?: string;
-      brandId?: string;
+      brandId?: string | null;
       classId?: string;
       instructorId?: string;
     } = {}

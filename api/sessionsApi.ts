@@ -57,7 +57,7 @@ const SessionsApi = {
   // Get session details by ID
   getSessionById: async (
     sessionId: string,
-    brandId?: string // Added brandId parameter
+    brandId?: string | null // Added brandId parameter
   ): Promise<ApiResponse<SessionDetail>> => {
     try {
       // Use brandId in the URL if provided

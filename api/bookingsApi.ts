@@ -13,6 +13,7 @@ interface BookingRequest {
   bookingType: "monthly" | "individual" | "subscription";
   packageBookingId?: string;
   client?: string;
+  brandId?: string | null;
 }
 
 // Bookings-related API endpoints

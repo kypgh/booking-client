@@ -191,26 +191,32 @@ export const useAvailableSessions = (filters?: {
   instructorId?: string;
 }) => {
   const authCheck = useAuthCheck();
+  const { activeBrandId } = useBrand();
 
   return useQuery({
-    queryKey: ["sessions", "available", filters],
+    queryKey: ["sessions", "available", { ...filters, brandId: activeBrandId }],
     queryFn: async () => {
-      const response = await ClassesApi.getAvailableSessions(filters);
+      const enhancedFilters = {
+        ...filters,
+        brandId: filters?.brandId || activeBrandId,
+      };
+      const response = await ClassesApi.getAvailableSessions(enhancedFilters);
       return response.data as {
         sessions: Session[];
         groupedByDate: Record<string, Session[]>;
       };
     },
     ...authCheck,
+    enabled: !!activeBrandId && authCheck.enabled,
   });
 };
 
-// Booking Queries
 export const useActiveBookings = () => {
   const authCheck = useAuthCheck();
+  const { activeBrandId } = useBrand();
 
   return useQuery({
-    queryKey: ["bookings", "active"],
+    queryKey: ["bookings", "active", activeBrandId],
     queryFn: async () => {
       const response = await BookingsApi.getActiveBookings();
       return response.data as BookingData[];
@@ -221,9 +227,10 @@ export const useActiveBookings = () => {
 
 export const useBookingHistory = () => {
   const authCheck = useAuthCheck();
+  const { activeBrandId } = useBrand();
 
   return useQuery({
-    queryKey: ["bookings", "history"],
+    queryKey: ["bookings", "history", activeBrandId],
     queryFn: async () => {
       const response = await BookingsApi.getBookingHistory();
       return response.data as BookingData[];
@@ -232,12 +239,12 @@ export const useBookingHistory = () => {
   });
 };
 
-// Package Queries
 export const useActivePackages = () => {
   const authCheck = useAuthCheck();
+  const { activeBrandId } = useBrand();
 
   return useQuery({
-    queryKey: ["packages", "active"],
+    queryKey: ["packages", "active", activeBrandId],
     queryFn: async () => {
       const response = await PackagesApi.getActivePackages();
       return response.data;
@@ -311,14 +318,18 @@ export const useVerifyInvitation = (token: string, enabled = true) => {
 
 export const useSessionDetails = (sessionId: string) => {
   const authCheck = useAuthCheck();
+  const { activeBrandId } = useBrand();
 
   return useQuery({
-    queryKey: ["sessions", sessionId],
+    queryKey: ["sessions", sessionId, activeBrandId],
     queryFn: async () => {
-      const response = await SessionsApi.getSessionById(sessionId);
+      const response = await SessionsApi.getSessionById(
+        sessionId,
+        activeBrandId
+      );
       return response.data as SessionDetail;
     },
-    enabled: !!sessionId && authCheck.enabled,
+    enabled: !!sessionId && !!activeBrandId && authCheck.enabled,
   });
 };
 
@@ -406,26 +417,27 @@ export const useUserProfile = () => {
   });
 };
 
-// Add these hooks to your useApi.ts file
-
-// Session hook for getting session details with brandId
 export const useSessionDetailsByBrand = (
   sessionId: string,
-  brandId: string
+  brandId?: string
 ) => {
   const authCheck = useAuthCheck();
+  const { activeBrandId } = useBrand();
+  const effectiveBrandId = brandId || activeBrandId;
 
   return useQuery({
-    queryKey: ["sessions", brandId, sessionId],
+    queryKey: ["sessions", effectiveBrandId, sessionId],
     queryFn: async () => {
-      const response = await SessionsApi.getSessionById(sessionId, brandId);
+      const response = await SessionsApi.getSessionById(
+        sessionId,
+        effectiveBrandId
+      );
       return response.data as SessionDetail;
     },
-    enabled: !!sessionId && !!brandId && authCheck.enabled,
+    enabled: !!sessionId && !!effectiveBrandId && authCheck.enabled,
   });
 };
 
-// Add this hook to hooks/useApi.ts
 export const usePackageOwnership = (packageId: string) => {
   const authCheck = useAuthCheck();
 
@@ -439,7 +451,6 @@ export const usePackageOwnership = (packageId: string) => {
   });
 };
 
-// Add this hook to get all owned packages
 export const useOwnedPackages = () => {
   const authCheck = useAuthCheck();
 
