@@ -1,84 +1,49 @@
-import React, { useEffect, useState } from "react";
+// components/MobileNavigation.tsx
+import React from "react";
 import { useRouter } from "next/router";
 import Link from "next/link";
 import { Home, Calendar, User, List, Clock, Package } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
+import { useBrand } from "@/contexts/BrandContext";
 
 export default function MobileNavigation() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { activeBrandId } = useBrand();
   const currentPath = router.pathname;
-  const [activeBrandId, setActiveBrandId] = useState<string | null>(null);
-
-  // Get brandId from user context or from the current URL
-  useEffect(() => {
-    // First try to get from URL params if available
-    if (router.query.brandId) {
-      setActiveBrandId(router.query.brandId as string);
-    }
-    // If not in URL, try to get from user context
-    else if (user && user.brands && user.brands.length > 0) {
-      const brandId =
-        typeof user.brands[0]._id === "string"
-          ? user.brands[0]._id
-          : (user.brands[0] as any)._id;
-      setActiveBrandId(brandId);
-    }
-  }, [router.query.brandId, user]);
 
   // Helper function to determine if a link is active
   const isActive = (path: string) => {
     if (path === "/" && currentPath === "/") return true;
 
-    // Special case for home page with brandId
-    if (path.startsWith("/home/") && currentPath.startsWith("/home/"))
-      return true;
+    // For non-dynamic routes - exact match
+    if (path === currentPath) return true;
 
-    // Handle dynamic routes with brandId
-    if (path.includes("/classes/") && currentPath.includes("/classes/"))
+    // Handle special cases
+    if (path === "/classes" && currentPath.startsWith("/classes")) return true;
+    if (path === "/schedule" && currentPath.startsWith("/schedule"))
       return true;
-    if (path.includes("/schedule/") && currentPath.includes("/schedule/"))
+    if (path === "/packages" && currentPath.startsWith("/packages"))
       return true;
-    if (path.includes("/packages/") && currentPath.includes("/packages/"))
+    if (path === "/bookings" && currentPath.startsWith("/bookings"))
       return true;
-
-    // For non-dynamic routes
-    if (path === "/bookings" && currentPath === "/bookings") return true;
-    if (path === "/profile" && currentPath === "/profile") return true;
+    if (path === "/profile" && currentPath.startsWith("/profile")) return true;
 
     return false;
   };
 
   // Generate navigation links
-  const getNavLinks = () => {
-    return [
-      { label: "Home", path: `/home/${activeBrandId}`, icon: Home },
-      {
-        label: "Classes",
-        path: activeBrandId ? `/classes/${activeBrandId}` : "/classes",
-        icon: List,
-      },
-      {
-        label: "Schedule",
-        path: activeBrandId ? `/schedule/${activeBrandId}` : "/schedule",
-        icon: Calendar,
-      },
-      {
-        label: "Packages",
-        path: activeBrandId ? `/packages/${activeBrandId}` : "/packages",
-        icon: Package,
-      },
-      { label: "Bookings", path: "/bookings", icon: Clock },
-      { label: "Profile", path: "/profile", icon: User },
-    ];
-  };
-
-  const navItems = getNavLinks();
+  const navLinks = [
+    { label: "Home", path: "/", icon: Home },
+    { label: "Classes", path: "/classes", icon: List },
+    { label: "Schedule", path: "/schedule", icon: Calendar },
+    { label: "Packages", path: "/packages", icon: Package },
+    { label: "Bookings", path: "/bookings", icon: Clock },
+    { label: "Profile", path: "/profile", icon: User },
+  ];
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-border">
       <div className="flex items-center justify-around h-16">
-        {navItems.map((item) => (
+        {navLinks.map((item) => (
           <Link
             key={item.path}
             href={item.path}

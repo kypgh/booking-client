@@ -8,6 +8,7 @@ import SessionsApi, { SessionDetail } from "@/api/sessionsApi";
 import AuthApi from "@/api/authApi";
 import BrandApi from "@/api/brandApi";
 import ProfileApi from "@/api/profileApi";
+import { useBrand } from "@/contexts/BrandContext";
 
 // Types
 export interface Session {
@@ -123,19 +124,17 @@ const useAuthCheck = () => {
 };
 
 // Classes Queries
-export const useClassList = (
-  businessType?: "fixed" | "hourly",
-  brandId?: string
-) => {
+export const useClassList = (businessType?: "fixed" | "hourly") => {
+  const { activeBrandId } = useBrand();
   const authCheck = useAuthCheck();
 
   return useQuery({
-    queryKey: ["classes", { businessType, brandId }],
+    queryKey: ["classes", { businessType, brandId: activeBrandId }],
     queryFn: async () => {
       const response = await ClassesApi.getAllClasses(
         businessType,
         undefined,
-        brandId
+        activeBrandId || undefined
       );
       // Filter to only show active classes
       const activeClasses = response.data.filter(
@@ -144,8 +143,10 @@ export const useClassList = (
       return activeClasses as ClassData[];
     },
     ...authCheck,
+    enabled: !!activeBrandId && authCheck.enabled, // Only run when we have a brandId
   });
 };
+
 export const useClassDetails = (classId: string) => {
   const authCheck = useAuthCheck();
 

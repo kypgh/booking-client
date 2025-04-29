@@ -77,6 +77,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   }, []);
 
+  console.log("u", user);
+
   // Login function with optional brandId parameter
   const login = async (email: string, password: string, brandId?: string) => {
     setIsLoading(true);

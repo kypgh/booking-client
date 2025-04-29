@@ -1,3 +1,4 @@
+// pages/login.tsx
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import Link from "next/link";
@@ -5,6 +6,7 @@ import Head from "next/head";
 import { useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { useBrand, Brand } from "@/contexts/BrandContext";
 
 // UI Components
 import { Button } from "@/components/ui/button";
@@ -27,9 +29,10 @@ type LoginFormData = {
 
 export default function LoginPage() {
   const { login, isAuthenticated } = useAuth();
+  const { setActiveBrandId } = useBrand();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  const [brands, setBrands] = useState<any[]>([]);
+  const [brands, setBrands] = useState<Brand[]>([]);
   const [showBrandSelection, setShowBrandSelection] = useState(false);
 
   const {
@@ -59,8 +62,22 @@ export default function LoginPage() {
         setBrands(response.data.client.brands);
         setShowBrandSelection(true);
         toast.success("Login successful! Please select a brand.");
+      } else if (
+        response?.data?.client?.brands &&
+        response.data.client.brands.length === 1
+      ) {
+        // If user has only one brand, set it and redirect
+        const brandId =
+          typeof response.data.client.brands[0] === "string"
+            ? response.data.client.brands[0]
+            : response.data.client.brands[0]._id ||
+              response.data.client.brands[0].id;
+
+        setActiveBrandId(brandId);
+        toast.success("Login successful!");
+        router.push("/");
       } else {
-        // If user has only one brand or no brand, redirect to home
+        // If user has no brands (unusual case)
         toast.success("Login successful!");
         router.push("/");
       }
@@ -73,15 +90,19 @@ export default function LoginPage() {
   };
 
   // Handle brand selection
-  const handleSelectBrand = (brandId: string) => {
-    router.push(`/home/${brandId}`);
+  const handleSelectBrand = (brand: Brand) => {
+    const brandId = brand._id || brand.id;
+    if (brandId) {
+      setActiveBrandId(brandId);
+      router.push("/");
+    }
   };
 
   if (showBrandSelection)
     return (
       <>
         <Head>
-          <title>Choose a Brand | FitBook</title>
+          <title>Choose a Brand | ScheduFit</title>
           <meta name="description" content="Select a brand to continue" />
           <meta name="viewport" content="width=device-width, initial-scale=1" />
         </Head>
@@ -91,7 +112,7 @@ export default function LoginPage() {
             <Card>
               <CardHeader className="text-center">
                 <CardTitle className="text-2xl font-bold text-primary">
-                  FitBook
+                  ScheduFit
                 </CardTitle>
                 <p className="text-sm text-muted-foreground">
                   Choose a brand to continue
@@ -105,7 +126,7 @@ export default function LoginPage() {
                       <Card
                         key={brand._id || brand.id}
                         className="hover:border-primary/50 transition-colors cursor-pointer"
-                        onClick={() => handleSelectBrand(brand._id || brand.id)}
+                        onClick={() => handleSelectBrand(brand)}
                       >
                         <CardContent className="p-4">
                           <div className="flex items-center">
@@ -154,8 +175,8 @@ export default function LoginPage() {
   return (
     <>
       <Head>
-        <title>Login | FitBook</title>
-        <meta name="description" content="Login to your FitBook account" />
+        <title>Login | ScheduFit</title>
+        <meta name="description" content="Login to your ScheduFit account" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
 
@@ -163,7 +184,7 @@ export default function LoginPage() {
         <Card className="w-full max-w-md">
           <CardHeader className="space-y-1 text-center">
             <CardTitle className="text-2xl font-bold text-primary">
-              FitBook
+              ScheduFit
             </CardTitle>
             <p className="text-sm text-muted-foreground">
               Enter your credentials to login

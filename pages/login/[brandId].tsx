@@ -1,3 +1,4 @@
+// pages/login/[brandId].tsx
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import Link from "next/link";
@@ -5,6 +6,7 @@ import Head from "next/head";
 import { useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { useBrand } from "@/contexts/BrandContext";
 import { getBrandInfo } from "@/hooks/useApi";
 
 // UI Components
@@ -19,6 +21,7 @@ import {
 } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import LoadingSpinner from "@/components/ui/loading-spinner";
+import { APP_NAME } from "@/lib/envs";
 
 // Login form type definition
 type LoginFormData = {
@@ -28,6 +31,7 @@ type LoginFormData = {
 
 export default function BrandLoginPage() {
   const { login, isAuthenticated } = useAuth();
+  const { setActiveBrandId } = useBrand();
   const router = useRouter();
   const { brandId } = router.query;
   const [isLoading, setIsLoading] = useState(false);
@@ -39,13 +43,18 @@ export default function BrandLoginPage() {
     error: brandError,
   } = getBrandInfo(brandId as string);
 
-  console.log(brandData);
-
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm<LoginFormData>();
+
+  // Set active brand ID from URL
+  useEffect(() => {
+    if (brandId && typeof brandId === "string") {
+      setActiveBrandId(brandId);
+    }
+  }, [brandId, setActiveBrandId]);
 
   // If already authenticated, redirect to home
   useEffect(() => {
@@ -64,6 +73,7 @@ export default function BrandLoginPage() {
     setIsLoading(true);
     try {
       await login(data.email, data.password, brandId as string);
+      setActiveBrandId(brandId as string);
       toast.success("Login successful!");
       router.push("/");
     } catch (error: any) {
@@ -115,13 +125,13 @@ export default function BrandLoginPage() {
     <>
       <Head>
         <title>
-          {isBrandLoading
-            ? "Login"
-            : `Login to ${brandData?.name || "FitBook"}`}
+          {isBrandLoading ? "Login" : `Login to ${brandData?.name || APP_NAME}`}
         </title>
         <meta
           name="description"
-          content={brandData?.description || "Login to your FitBook account"}
+          content={
+            brandData?.description || `Login to your ${APP_NAME} account`
+          }
         />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
@@ -145,7 +155,7 @@ export default function BrandLoginPage() {
                   </div>
                 )}
                 <CardTitle className="text-2xl font-bold text-primary">
-                  {brandData?.name || "FitBook"}
+                  {brandData?.name || APP_NAME}
                 </CardTitle>
                 {brandData?.description && (
                   <p className="text-sm text-muted-foreground mt-1">
@@ -243,7 +253,7 @@ export default function BrandLoginPage() {
                       href={`mailto:${brandData.contact.email || ""}`}
                       className="text-primary"
                     >
-                      {brandData.contact.email || "support@fitbook.com"}
+                      {brandData.contact.email}
                     </a>
                   </div>
                 )}

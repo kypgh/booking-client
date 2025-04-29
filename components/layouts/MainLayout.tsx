@@ -1,3 +1,4 @@
+// components/layouts/MainLayout.tsx
 import React, { ReactNode } from "react";
 import Head from "next/head";
 import { useRouter } from "next/router";
@@ -5,8 +6,9 @@ import MobileNavigation from "../MobileNavigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { ChevronLeft } from "lucide-react";
 import LoadingSpinner from "../ui/loading-spinner";
+import { APP_NAME } from "@/lib/envs";
 
-type MainLayoutProps = {
+export type MainLayoutProps = {
   children: ReactNode;
   title?: string;
   description?: string;
@@ -19,7 +21,7 @@ type MainLayoutProps = {
 
 export default function MainLayout({
   children,
-  title = "FitBook",
+  title = APP_NAME,
   description = "Book your fitness classes easily",
   showNavigation = true,
   padBottom = true,

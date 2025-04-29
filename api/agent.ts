@@ -1,3 +1,4 @@
+import { API_URL } from "@/lib/envs";
 import axios, {
   AxiosInstance,
   AxiosError,
@@ -6,7 +7,6 @@ import axios, {
 } from "axios";
 
 // Create base axios instance
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
 
 const axiosInstance: AxiosInstance = axios.create({
   baseURL: API_URL,

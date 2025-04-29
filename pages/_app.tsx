@@ -1,6 +1,8 @@
+// pages/_app.tsx
 import "@/styles/globals.css";
 import type { AppProps } from "next/app";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { BrandProvider } from "@/contexts/BrandContext";
 import { Toaster } from "react-hot-toast";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
@@ -8,7 +10,6 @@ import { useState } from "react";
 
 export default function App({ Component, pageProps }: AppProps) {
   // Create a new QueryClient instance for each session
-  // This prevents sharing client state between different users
   const [queryClient] = useState(
     () =>
       new QueryClient({
@@ -25,8 +26,10 @@ export default function App({ Component, pageProps }: AppProps) {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <Component {...pageProps} />
-        <Toaster position="top-center" />
+        <BrandProvider>
+          <Component {...pageProps} />
+          <Toaster position="top-center" />
+        </BrandProvider>
       </AuthProvider>
       {process.env.NODE_ENV !== "production" && (
         <ReactQueryDevtools initialIsOpen={false} />
