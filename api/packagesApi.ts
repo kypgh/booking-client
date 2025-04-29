@@ -200,6 +200,19 @@ const PackagesApi = {
       throw error;
     }
   },
+  checkSubscriptionOwnership: async (
+    planId: string
+  ): Promise<ApiResponse<{ hasActivePlan: boolean }>> => {
+    try {
+      const response = await agent.post("/subscription/check-ownership", {
+        planId,
+      });
+      return response;
+    } catch (error) {
+      console.error("Check subscription ownership error:", error);
+      throw error;
+    }
+  },
 };
 
 export default PackagesApi;

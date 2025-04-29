@@ -464,3 +464,72 @@ export const useOwnedPackages = () => {
     ...authCheck,
   });
 };
+
+export const useSubscriptionOwnership = (planId: string) => {
+  const authCheck = useAuthCheck();
+
+  return useQuery({
+    queryKey: ["subscriptions", "ownership", planId],
+    queryFn: async () => {
+      const response = await PackagesApi.checkSubscriptionOwnership(planId);
+      return response.data.hasActivePlan;
+    },
+    enabled: !!planId && authCheck.enabled,
+  });
+};
+
+// Update to hooks/useApi.ts
+export const useOwnedSubscriptions = () => {
+  const authCheck = useAuthCheck();
+  const { activeBrandId } = useBrand();
+
+  return useQuery({
+    queryKey: ["subscriptions", "owned", activeBrandId],
+    queryFn: async () => {
+      try {
+        const response = await PackagesApi.getSubscriptions();
+
+        // Safety check
+        if (!response.data || !Array.isArray(response.data)) {
+          console.warn(
+            "Unexpected response format from getSubscriptions",
+            response
+          );
+          return [];
+        }
+
+        // Extract plan IDs from active subscriptions
+        const planIds = response.data
+          .filter((sub: any) => sub.status === "active")
+          .map((sub: any) => {
+            // Handle different possible formats
+            if (sub.planId) return sub.planId;
+            if (sub.id) return sub.id;
+            return sub._id || "";
+          })
+          .filter(Boolean); // Remove empty strings
+
+        console.log("Owned subscription plan IDs:", planIds);
+        return planIds;
+      } catch (error) {
+        console.error("Error in useOwnedSubscriptions:", error);
+        return [];
+      }
+    },
+    ...authCheck,
+  });
+};
+
+export const useActiveSubscriptions = () => {
+  const authCheck = useAuthCheck();
+  const { activeBrandId } = useBrand();
+
+  return useQuery({
+    queryKey: ["subscriptions", "active", activeBrandId],
+    queryFn: async () => {
+      const response = await PackagesApi.getSubscriptions();
+      return response.data.filter((sub: any) => sub.status === "active");
+    },
+    ...authCheck,
+  });
+};

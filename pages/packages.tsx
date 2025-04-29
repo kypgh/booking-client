@@ -8,6 +8,8 @@ import {
   useSubscriptionPlans,
   useActivePackages,
   useOwnedPackages,
+  useActiveSubscriptions,
+  useOwnedSubscriptions,
   PackageData,
   SubscriptionPlan,
 } from "@/hooks/useApi";
@@ -26,6 +28,9 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { format } from "date-fns";
 import { Package, CreditCard, CalendarClock } from "lucide-react";
+import PackageCard from "@/components/PackageCard";
+import SubscriptionCard from "@/components/SubscriptionCard";
+import LoadingSpinner from "@/components/ui/loading-spinner";
 
 export default function PackagesPage() {
   const router = useRouter();
@@ -61,9 +66,22 @@ export default function PackagesPage() {
     error: activePackagesError,
   } = useActivePackages();
 
+  // Fetch active subscriptions for the client
+  const {
+    data: activeSubscriptions,
+    isLoading: activeSubscriptionsLoading,
+    error: activeSubscriptionsError,
+  } = useActiveSubscriptions();
+
   // Get a list of owned package IDs
   const { data: ownedPackageIds, isLoading: ownedPackagesLoading } =
     useOwnedPackages();
+
+  // Get a list of owned subscription plan IDs
+  const { data: ownedSubscriptionIds, isLoading: ownedSubscriptionsLoading } =
+    useOwnedSubscriptions();
+
+  console.log(subscriptionPlans, ownedSubscriptionIds);
 
   // Purchase mutations
   const { mutate: purchasePackage, isPending: isPurchasingPackage } =
@@ -187,6 +205,21 @@ export default function PackagesPage() {
     return ownedPackageIds.includes(packageId);
   };
 
+  // Check if a subscription plan is already owned
+  const isSubscriptionOwned = (planId: string): boolean => {
+    if (!ownedSubscriptionIds) return false;
+    return ownedSubscriptionIds.includes(planId);
+  };
+
+  // Check if the user has any active memberships (packages or subscriptions)
+  const hasActiveMemberships = (): boolean => {
+    const hasPackages = activePackages ? activePackages.length > 0 : false;
+    const hasSubscriptions = activeSubscriptions
+      ? activeSubscriptions.length > 0
+      : false;
+    return hasPackages || hasSubscriptions;
+  };
+
   return (
     <BrandLayout
       title="Membership Options | FitBook"
@@ -220,7 +253,7 @@ export default function PackagesPage() {
           <TabsContent value="credits">
             {packagesLoading || ownedPackagesLoading ? (
               <div className="flex justify-center py-8">
-                <div className="animate-spin h-8 w-8 border-2 border-primary rounded-full border-t-transparent"></div>
+                <LoadingSpinner size="md" />
               </div>
             ) : packagesError ? (
               <div className="text-center py-8 text-destructive">
@@ -267,9 +300,9 @@ export default function PackagesPage() {
 
           {/* Subscriptions Tab */}
           <TabsContent value="subscriptions">
-            {subscriptionPlansLoading ? (
+            {subscriptionPlansLoading || ownedSubscriptionsLoading ? (
               <div className="flex justify-center py-8">
-                <div className="animate-spin h-8 w-8 border-2 border-primary rounded-full border-t-transparent"></div>
+                <LoadingSpinner size="md" />
               </div>
             ) : subscriptionPlansError ? (
               <div className="text-center py-8 text-destructive">
@@ -278,22 +311,36 @@ export default function PackagesPage() {
             ) : subscriptionPlans && subscriptionPlans.length > 0 ? (
               <>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {subscriptionPlans.map((plan) => (
-                    <PricingCard
-                      key={plan.id}
-                      title={plan.name}
-                      description={plan.description}
-                      price={plan.price}
-                      features={getSubscriptionFeatures(plan)}
-                      badge={plan.allowAllClasses ? "Unlimited" : undefined}
-                      onPurchase={() =>
-                        handleOpenPurchaseDialog(plan, "subscription")
-                      }
-                      isLoading={
-                        isPurchasingSubscription && selectedItem?.id === plan.id
-                      }
-                    />
-                  ))}
+                  {subscriptionPlans.map((plan) => {
+                    const planId = plan.id; // Get the plan ID
+                    const isOwned = isSubscriptionOwned(planId);
+
+                    // Debug log for troubleshooting
+                    console.log(
+                      `Plan ${plan.name} (${planId}): ${
+                        isOwned ? "Already owned" : "Not owned"
+                      }`
+                    );
+
+                    return (
+                      <PricingCard
+                        key={planId}
+                        title={plan.name}
+                        description={plan.description}
+                        price={plan.price}
+                        features={getSubscriptionFeatures(plan)}
+                        badge={plan.allowAllClasses ? "Unlimited" : undefined}
+                        onPurchase={() =>
+                          handleOpenPurchaseDialog(plan, "subscription")
+                        }
+                        isLoading={
+                          isPurchasingSubscription &&
+                          selectedItem?.id === planId
+                        }
+                        alreadyOwned={isOwned}
+                      />
+                    );
+                  })}
                 </div>
 
                 <div className="mt-8 p-4 bg-accent/30 rounded-lg">
@@ -315,92 +362,60 @@ export default function PackagesPage() {
 
           {/* My Plans Tab */}
           <TabsContent value="myplans">
-            {activePackagesLoading ? (
+            {activePackagesLoading || activeSubscriptionsLoading ? (
               <div className="flex justify-center py-8">
-                <div className="animate-spin h-8 w-8 border-2 border-primary rounded-full border-t-transparent"></div>
+                <LoadingSpinner size="md" />
               </div>
-            ) : activePackagesError ? (
+            ) : activePackagesError || activeSubscriptionsError ? (
               <div className="text-center py-8 text-destructive">
-                <p>Error loading your packages. Please try again.</p>
+                <p>Error loading your memberships. Please try again.</p>
               </div>
-            ) : activePackages && activePackages.length > 0 ? (
+            ) : hasActiveMemberships() ? (
               <div className="space-y-6">
-                <h3 className="text-lg font-medium mb-2">
-                  Your Active Packages
-                </h3>
-                <div className="grid gap-6 md:grid-cols-2">
-                  {activePackages.map((pkg) => (
-                    <Card key={pkg._id} className="overflow-hidden">
-                      <CardHeader className="pb-2 bg-accent/20">
-                        <CardTitle className="flex justify-between items-center">
-                          <span>{pkg.package.name}</span>
-                          <span className="text-sm bg-primary/10 text-primary px-2 py-1 rounded-full">
-                            {pkg.remainingCredits} / {pkg.initialCredits}{" "}
-                            credits
-                          </span>
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="p-4">
-                        <div className="space-y-4">
-                          <div>
-                            <div className="flex justify-between text-sm mb-1">
-                              <span className="text-muted-foreground">
-                                Credits Remaining
-                              </span>
-                              <span>
-                                {Math.round(
-                                  (pkg.remainingCredits / pkg.initialCredits) *
-                                    100
-                                )}
-                                %
-                              </span>
-                            </div>
-                            <Progress
-                              value={
-                                (pkg.remainingCredits / pkg.initialCredits) *
-                                100
-                              }
-                              className="h-2"
-                            />
-                          </div>
+                {/* Active Packages Section */}
+                {activePackages && activePackages.length > 0 && (
+                  <>
+                    <h3 className="text-lg font-medium mb-2">
+                      Your Active Packages
+                    </h3>
+                    <div className="grid gap-6 md:grid-cols-2">
+                      {activePackages.map((pkg) => (
+                        <PackageCard
+                          key={pkg._id}
+                          packageData={pkg}
+                          onViewDetails={() =>
+                            router.push(`/packages/${pkg._id}`)
+                          }
+                        />
+                      ))}
+                    </div>
+                  </>
+                )}
 
-                          <div className="grid grid-cols-2 gap-4 text-sm">
-                            <div>
-                              <p className="text-muted-foreground">Purchased</p>
-                              <p>
-                                {format(new Date(pkg.startDate), "MMM d, yyyy")}
-                              </p>
-                            </div>
-                            <div>
-                              <p className="text-muted-foreground">Expires</p>
-                              <p className="font-medium">
-                                {format(
-                                  new Date(pkg.expiryDate),
-                                  "MMM d, yyyy"
-                                )}
-                              </p>
-                            </div>
-                          </div>
-
-                          <div className="mt-2 flex justify-center">
-                            <Button
-                              onClick={() => router.push("/schedule")}
-                              className="w-full"
-                              size="sm"
-                            >
-                              Book a Class
-                            </Button>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
+                {/* Active Subscriptions Section */}
+                {activeSubscriptions && activeSubscriptions.length > 0 && (
+                  <>
+                    <h3 className="text-lg font-medium mt-8 mb-2">
+                      Your Active Subscriptions
+                    </h3>
+                    <div className="grid gap-6 md:grid-cols-2">
+                      {activeSubscriptions.map((subscription: any) => (
+                        <SubscriptionCard
+                          key={subscription._id}
+                          subscriptionData={subscription}
+                          onViewDetails={() =>
+                            router.push(`/subscriptions/${subscription._id}`)
+                          }
+                        />
+                      ))}
+                    </div>
+                  </>
+                )}
 
                 <Card className="mt-4">
                   <CardHeader className="pb-2">
                     <CardTitle className="text-base">
-                      Package Usage Tips
+                      Package & Subscription Usage Tips
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="p-4">
@@ -410,8 +425,8 @@ export default function PackagesPage() {
                           1
                         </span>
                         <span>
-                          When booking a class, select "Use Package Credits" to
-                          use your package.
+                          When booking a class, select the appropriate plan to
+                          use.
                         </span>
                       </li>
                       <li className="flex items-start">
@@ -428,7 +443,7 @@ export default function PackagesPage() {
                         </span>
                         <span>
                           View your bookings in the "Bookings" tab to track your
-                          package usage.
+                          usage.
                         </span>
                       </li>
                     </ul>
@@ -440,10 +455,12 @@ export default function PackagesPage() {
                 <div className="mx-auto w-16 h-16 bg-muted/30 rounded-full flex items-center justify-center mb-4">
                   <Package className="h-8 w-8 text-muted-foreground" />
                 </div>
-                <h3 className="text-lg font-medium mb-2">No Active Packages</h3>
+                <h3 className="text-lg font-medium mb-2">
+                  No Active Memberships
+                </h3>
                 <p className="text-muted-foreground mb-6 max-w-md mx-auto">
                   You don't have any active packages or subscriptions. Purchase
-                  a package to start booking classes.
+                  a package or subscription to start booking classes.
                 </p>
                 <div className="flex gap-4 justify-center">
                   <Button
