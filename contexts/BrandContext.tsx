@@ -66,6 +66,7 @@ export const BrandProvider = ({ children }: { children: ReactNode }) => {
         description: foundBrand.description,
         logo: foundBrand.logo,
         status: foundBrand.status,
+        email: foundBrand.eamil,
       };
       setActiveBrand(brandData);
     } else {

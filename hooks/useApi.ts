@@ -148,15 +148,16 @@ export const useClassList = (businessType?: "fixed" | "hourly") => {
 };
 
 export const useClassDetails = (classId: string) => {
+  const { activeBrandId } = useBrand();
   const authCheck = useAuthCheck();
 
   return useQuery({
-    queryKey: ["classes", classId],
+    queryKey: ["classes", classId, activeBrandId],
     queryFn: async () => {
       const response = await ClassesApi.getClassById(classId);
       return response.data as ClassData;
     },
-    enabled: !!classId && authCheck.enabled,
+    enabled: !!classId && !!activeBrandId && authCheck.enabled,
   });
 };
 
@@ -169,15 +170,16 @@ export const useClassSessions = (
     includeFullyBooked?: boolean;
   }
 ) => {
+  const { activeBrandId } = useBrand();
   const authCheck = useAuthCheck();
 
   return useQuery({
-    queryKey: ["classes", classId, "sessions", filters],
+    queryKey: ["classes", classId, "sessions", filters, activeBrandId],
     queryFn: async () => {
       const response = await ClassesApi.getClassSessions(classId, filters);
       return response.data;
     },
-    enabled: !!classId && authCheck.enabled,
+    enabled: !!classId && !!activeBrandId && authCheck.enabled,
   });
 };
 
@@ -375,13 +377,14 @@ export const useSubscriptionPlans = (brandId: string) => {
 //   });
 // };
 
-export const getBrandInfo = (brandId: string) => {
+export const getBrandInfo = (brandId: string | null) => {
   return useQuery({
     queryKey: ["brand", "info"],
     queryFn: async () => {
       const response = await BrandApi.getInfoById(brandId);
       return response.data;
     },
+    enabled: !!brandId,
   });
 };
 

@@ -21,7 +21,7 @@ export default function ClassesPage() {
 
   const handleViewClass = (classId: string) => {
     // Route to the session details page with the active brand ID
-    router.push(`/session/${classId}`);
+    router.push(`/classes/${classId}`);
   };
 
   return (

@@ -1,29 +1,29 @@
-import React, { useState } from "react";
+// pages/classes/[id].tsx
+import React from "react";
 import { useRouter } from "next/router";
-import {
-  Calendar,
-  Clock,
-  Users,
-  ChevronLeft,
-  Info,
-  AlertCircle,
-} from "lucide-react";
-import MainLayout from "@/components/layouts/MainLayout";
+import { Calendar, Clock, Users, AlertCircle } from "lucide-react";
+import BrandLayout from "@/components/layouts/BrandLayout";
 import { useClassDetails, useClassSessions } from "@/hooks/useApi";
+import { useBrand } from "@/contexts/BrandContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { format, parseISO, isAfter } from "date-fns";
 
-// Get upcoming sessions for this class
 const today = new Date();
 const inTwoWeeks = new Date();
+const now = new Date();
 inTwoWeeks.setDate(today.getDate() + 14);
 
 export default function ClassDetailsPage() {
   const router = useRouter();
-  const { brandId, id } = router.query;
+  const { id } = router.query;
+  const { activeBrandId } = useBrand();
+
+  // Get class details with the id from the URL
   const { data: classData, isLoading, error } = useClassDetails(id as string);
+
+  // Get upcoming sessions for this class
 
   const { data: sessions, isLoading: sessionsLoading } = useClassSessions(
     id as string,
@@ -75,11 +75,11 @@ export default function ClassDetailsPage() {
   };
 
   const handleGoBack = () => {
-    router.push(`/classes/${brandId}`);
+    router.push(`/classes`);
   };
 
   return (
-    <MainLayout
+    <BrandLayout
       title={classData ? `${classData.name} | FitBook` : "Class Details"}
       loading={isLoading}
       showBackButton={true}
@@ -238,33 +238,6 @@ export default function ClassDetailsPage() {
             </CardContent>
           </Card>
 
-          {/* Cancellation Policy */}
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base flex items-center">
-                <Info size={16} className="mr-2" />
-                Class Policies
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-4 pt-0">
-              <div className="flex items-start mb-2">
-                <AlertCircle
-                  size={16}
-                  className="mr-2 text-muted-foreground mt-0.5 shrink-0"
-                />
-                <div className="text-sm">
-                  <p>
-                    Cancellations must be made at least{" "}
-                    <span className="font-semibold">
-                      {classData.cancellationPolicy?.hours || 24} hours
-                    </span>{" "}
-                    before the class starts.
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
           {/* Upcoming Sessions */}
           <div className="mt-6">
             <h2 className="text-lg font-medium mb-3">Upcoming Sessions</h2>
@@ -278,7 +251,7 @@ export default function ClassDetailsPage() {
                 {sessions.map((session: any) => {
                   const sessionDate = parseISO(session.dateTime);
                   const isAvailable = session.availableSpots > 0;
-                  const isFuture = isAfter(sessionDate, new Date());
+                  const isFuture = isAfter(sessionDate, now);
 
                   return (
                     <Card
@@ -310,7 +283,7 @@ export default function ClassDetailsPage() {
                                 className="mt-2"
                                 disabled={!isAvailable}
                                 onClick={() =>
-                                  router.push(`/book/${brandId}/${session._id}`)
+                                  router.push(`/book/${session._id}`)
                                 }
                               >
                                 {isAvailable ? "Book" : "Full"}
@@ -331,6 +304,6 @@ export default function ClassDetailsPage() {
           </div>
         </div>
       ) : null}
-    </MainLayout>
+    </BrandLayout>
   );
 }

@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+// pages/index.tsx
+import React from "react";
 import { useRouter } from "next/router";
-import MainLayout from "@/components/layouts/MainLayout";
-import { useAuth } from "@/contexts/AuthContext";
+import BrandLayout from "@/components/layouts/BrandLayout";
+import { useBrand } from "@/contexts/BrandContext";
 import {
   useActiveBookings,
   useAvailableSessions,
@@ -10,65 +11,34 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Calendar, Clock, User, Package, List } from "lucide-react";
-import LoadingSpinner from "@/components/ui/loading-spinner";
 import { format, parseISO, isSameDay } from "date-fns";
+
 const today = new Date();
 const tomorrow = new Date();
+
 export default function HomePage() {
-  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const router = useRouter();
-  const [activeBrandId, setActiveBrandId] = useState<string | null>(null);
+  const { activeBrandId, activeBrand } = useBrand();
 
-  // Get current brand ID from user
-  useEffect(() => {
-    if (user && user.brands && user.brands.length > 0) {
-      // Depending on how your user.brands is structured
-      const brandId =
-        typeof user.brands[0] === "string"
-          ? user.brands[0]
-          : (user.brands[0] as any).id;
+  // Get today and tomorrow for session filtering
 
-      setActiveBrandId(brandId);
-    }
-  }, [user]);
+  tomorrow.setDate(today.getDate() + 1);
 
-  // Fetch brand information if we have an active brand ID
-  const { data: brandData, isLoading: brandLoading } = getBrandInfo(
-    activeBrandId || ""
-  );
+  // Fetch brand information if needed (may be redundant if activeBrand has all data)
+  const { data: brandData, isLoading: brandLoading } =
+    getBrandInfo(activeBrandId);
 
   // Fetch user's active bookings
   const { data: activeBookings, isLoading: bookingsLoading } =
     useActiveBookings();
 
-  // Fetch today's sessions
-
-  tomorrow.setDate(today.getDate() + 1);
-
+  // Fetch today's sessions with the active brand ID from context
   const { data: sessionsData, isLoading: sessionsLoading } =
     useAvailableSessions({
       brandId: activeBrandId || undefined,
       startDate: today.toISOString(),
       endDate: tomorrow.toISOString(),
     });
-
-  // Redirect to login if not authenticated
-  useEffect(() => {
-    if (!authLoading && !isAuthenticated) {
-      router.push("/login");
-    }
-  }, [isAuthenticated, authLoading, router]);
-
-  // If still loading or not authenticated, show loading
-  if (authLoading || !isAuthenticated) {
-    return (
-      <MainLayout title="Loading" showNavigation={false}>
-        <div className="flex items-center justify-center h-screen">
-          <LoadingSpinner size="md" />
-        </div>
-      </MainLayout>
-    );
-  }
 
   // Filter sessions for today only
   const todaySessions =
@@ -87,13 +57,13 @@ export default function HomePage() {
       .slice(0, 3) || [];
 
   return (
-    <MainLayout
+    <BrandLayout
       title={brandData ? `${brandData.name} | FitBook` : "Home | FitBook"}
     >
       {/* Welcome Section */}
       <section className="mb-6">
         <h1 className="text-2xl font-bold mb-2">
-          Hello, {user?.name || "there"}!
+          Hello, {activeBrand?.name ? `${activeBrand.name} member` : "there"}!
         </h1>
         <p className="text-muted-foreground">
           Welcome to {brandData ? brandData.name : "FitBook"}
@@ -122,7 +92,7 @@ export default function HomePage() {
         <div className="space-y-3">
           {sessionsLoading ? (
             <div className="flex justify-center py-4">
-              <LoadingSpinner size="sm" />
+              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary"></div>
             </div>
           ) : todaySessions.length > 0 ? (
             todaySessions.map((session) => (
@@ -194,7 +164,7 @@ export default function HomePage() {
         <div className="space-y-3">
           {bookingsLoading ? (
             <div className="flex justify-center py-4">
-              <LoadingSpinner size="sm" />
+              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary"></div>
             </div>
           ) : upcomingBookings.length > 0 ? (
             upcomingBookings.map((booking: any) => (
@@ -257,11 +227,7 @@ export default function HomePage() {
           <Button
             variant="outline"
             className="h-20 flex flex-col justify-center"
-            onClick={() =>
-              router.push(
-                activeBrandId ? `/classes/${activeBrandId}` : "/classes"
-              )
-            }
+            onClick={() => router.push("/classes")}
           >
             <List className="h-5 w-5 mb-2" />
             Browse Classes
@@ -269,11 +235,7 @@ export default function HomePage() {
           <Button
             variant="outline"
             className="h-20 flex flex-col justify-center"
-            onClick={() =>
-              router.push(
-                activeBrandId ? `/schedule/${activeBrandId}` : "/schedule"
-              )
-            }
+            onClick={() => router.push("/schedule")}
           >
             <Calendar className="h-5 w-5 mb-2" />
             Book Class
@@ -281,11 +243,7 @@ export default function HomePage() {
           <Button
             variant="outline"
             className="h-20 flex flex-col justify-center"
-            onClick={() =>
-              router.push(
-                activeBrandId ? `/packages/${activeBrandId}` : "/packages"
-              )
-            }
+            onClick={() => router.push("/packages")}
           >
             <Package className="h-5 w-5 mb-2" />
             View Packages
@@ -300,6 +258,7 @@ export default function HomePage() {
           </Button>
         </div>
       </section>
+
       {/* Facility Information (if available) */}
       {brandData?.address && (
         <section className="mt-8 pt-6 border-t border-border">
@@ -316,6 +275,7 @@ export default function HomePage() {
                   {brandData.contact.phone && (
                     <p className="flex items-center">
                       <span className="text-muted-foreground mr-2">Phone:</span>
+
                       <a
                         href={`tel:${brandData.contact.phone}`}
                         className="text-primary"
@@ -324,14 +284,15 @@ export default function HomePage() {
                       </a>
                     </p>
                   )}
-                  {brandData.contact.email && (
+                  {brandData.email && (
                     <p className="flex items-center">
                       <span className="text-muted-foreground mr-2">Email:</span>
+
                       <a
-                        href={`mailto:${brandData.contact.email}`}
+                        href={`mailto:${brandData.email}`}
                         className="text-primary"
                       >
-                        {brandData.contact.email}
+                        {brandData.email}
                       </a>
                     </p>
                   )}
@@ -341,6 +302,6 @@ export default function HomePage() {
           </Card>
         </section>
       )}
-    </MainLayout>
+    </BrandLayout>
   );
 }
