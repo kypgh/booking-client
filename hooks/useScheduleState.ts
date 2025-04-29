@@ -11,14 +11,14 @@ interface ScheduleState {
 // Default state
 const defaultState: ScheduleState = {
   currentDate: new Date().toISOString(),
-  selectedDate: null,
+  selectedDate: new Date().toISOString(),
   brandId: null,
 };
 
 // Cache key for our state
 const SCHEDULE_STATE_CACHE_KEY = "scheduleState";
 
-export function useScheduleState(initialBrandId: string | null | undefined) {
+export function useScheduleState(brandId: string | null) {
   const queryClient = useQueryClient();
   const [isInitialized, setIsInitialized] = useState(false);
 
@@ -29,30 +29,27 @@ export function useScheduleState(initialBrandId: string | null | undefined) {
     ]);
 
     // If we have cached state and the brandId matches, return it
-    if (
-      cachedState &&
-      (cachedState.brandId === initialBrandId || initialBrandId === undefined)
-    ) {
+    if (cachedState && cachedState.brandId === brandId) {
       return cachedState;
     }
 
     // Otherwise, return default state with the provided brandId
     return {
       ...defaultState,
-      brandId: initialBrandId || null,
+      brandId: brandId,
     };
   };
 
   // Initialize state with cached values
   const [state, setState] = useState<ScheduleState>(defaultState);
 
-  // Load the cached state on component mount
+  // Load the cached state when brandId changes or on mount
   useEffect(() => {
-    if (!isInitialized && initialBrandId) {
+    if (brandId) {
       setState(getCachedState());
       setIsInitialized(true);
     }
-  }, [isInitialized, initialBrandId]);
+  }, [brandId]);
 
   // Update the cache whenever state changes
   useEffect(() => {

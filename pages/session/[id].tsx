@@ -1,3 +1,4 @@
+// pages/session/[id].tsx
 import React, { useState } from "react";
 import { useRouter } from "next/router";
 import { format, parseISO, isAfter, addMinutes } from "date-fns";
@@ -11,32 +12,33 @@ import {
   CheckCircle,
   X,
 } from "lucide-react";
-import MainLayout from "@/components/layouts/MainLayout";
+import BrandLayout from "@/components/layouts/BrandLayout";
 import { useSessionDetailsByBrand } from "@/hooks/useApi";
 import { useCreateBookingWithBrand } from "@/hooks/useMutations";
 import { toast } from "react-hot-toast";
+import { useBrand } from "@/contexts/BrandContext";
 
 // UI Components
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import LoadingSpinner from "@/components/ui/loading-spinner";
 import BookSessionDialog from "@/components/BookSessionDialog";
 import { useAuth } from "@/contexts/AuthContext";
 
 export default function SessionDetailPage() {
   const router = useRouter();
-  const { brandId, id } = router.query;
+  const { id } = router.query;
   const { user } = useAuth();
+  const { activeBrandId } = useBrand();
   const [isBookDialogOpen, setIsBookDialogOpen] = useState(false);
 
-  // Use the session details hook with brandId
+  // Use the session details hook with the active brand ID
   const {
     data: session,
     isLoading,
     error,
-  } = useSessionDetailsByBrand(id as string, brandId as string);
+  } = useSessionDetailsByBrand(id as string, activeBrandId as string);
 
   // Format time function
   const formatTime = (dateString: string) => {
@@ -98,11 +100,10 @@ export default function SessionDetailPage() {
   };
 
   return (
-    <MainLayout
+    <BrandLayout
       title={
         session ? `Session Details | ${session.class.name}` : "Session Details"
       }
-      loading={isLoading}
       showBackButton={true}
       headerTitle="Session Details"
     >
@@ -315,9 +316,9 @@ export default function SessionDetailPage() {
               },
             },
           }}
-          brandId={brandId as string}
+          brandId={activeBrandId as string}
         />
       )}
-    </MainLayout>
+    </BrandLayout>
   );
 }
