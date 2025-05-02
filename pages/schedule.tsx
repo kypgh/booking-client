@@ -11,7 +11,7 @@ import {
   isEqual,
   isPast,
 } from "date-fns";
-import { ChevronLeft, ChevronRight, Clock, User } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, Clock, User } from "lucide-react";
 import BrandLayout from "@/components/layouts/BrandLayout";
 import { useAuth } from "@/contexts/AuthContext";
 import { useBrand } from "@/contexts/BrandContext";
@@ -22,6 +22,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import LoadingSpinner from "@/components/ui/loading-spinner";
 import BookSessionDialog from "@/components/BookSessionDialog";
 import { useScheduleState } from "@/hooks/useScheduleState";
+import { useSessionBookingStatus } from "@/hooks/useSessionBookingStatus";
 
 export default function SchedulePage() {
   const router = useRouter();
@@ -30,6 +31,9 @@ export default function SchedulePage() {
   // Use our custom hook to persist state between navigations
   const { currentDate, selectedDate, setCurrentDate, setSelectedDate } =
     useScheduleState(activeBrandId);
+
+  const { isSessionBooked, isLoading: bookingsLoading } =
+    useSessionBookingStatus();
 
   const [isBookingDialogOpen, setIsBookingDialogOpen] = useState(false);
   const [selectedSession, setSelectedSession] = useState<any>(null);
@@ -198,53 +202,74 @@ export default function SchedulePage() {
                     : "No sessions available for this day"}
                 </p>
               ) : (
-                getSessionsForDate(selectedDate).map((session) => (
-                  <Card
-                    key={session.id}
-                    className="cursor-pointer hover:border-primary/50 transition-colors"
-                    onClick={() => handleOpenSession(session.id)}
-                  >
-                    <CardContent className="p-3">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <h4 className="font-medium">{session.class.name}</h4>
-                          <div className="flex items-center text-sm text-muted-foreground mt-1">
-                            <Clock size={14} className="mr-1" />
-                            <span>
-                              {format(parseISO(session.dateTime), "h:mm a")} •{" "}
-                              {session.duration}min
-                            </span>
+                getSessionsForDate(selectedDate).map((session) => {
+                  const isBooked = isSessionBooked(session.id);
+
+                  return (
+                    <Card
+                      key={session.id}
+                      className={`cursor-pointer hover:border-primary/50 transition-colors ${
+                        isBooked
+                          ? "border-green-200 bg-green-50/30 dark:bg-green-950/10"
+                          : ""
+                      }`}
+                      onClick={() => handleOpenSession(session.id)}
+                    >
+                      <CardContent className="p-3">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <h4 className="font-medium">
+                              {session.class.name}
+                            </h4>
+                            <div className="flex items-center text-sm text-muted-foreground mt-1">
+                              <Clock size={14} className="mr-1" />
+                              <span>
+                                {format(parseISO(session.dateTime), "h:mm a")} •{" "}
+                                {session.duration}min
+                              </span>
+                            </div>
+                            <div className="flex items-center text-sm text-muted-foreground mt-1">
+                              <User size={14} className="mr-1" />
+                              <span>{session.class.instructor.name}</span>
+                            </div>
                           </div>
-                          <div className="flex items-center text-sm text-muted-foreground mt-1">
-                            <User size={14} className="mr-1" />
-                            <span>{session.class.instructor.name}</span>
+                          <div className="flex flex-col items-end">
+                            <Badge
+                              variant={
+                                session.availableSpots > 3
+                                  ? "outline"
+                                  : "secondary"
+                              }
+                            >
+                              {session.availableSpots} spots
+                            </Badge>
+
+                            {isBooked ? (
+                              <Badge
+                                variant="success"
+                                className="mt-2 px-3 py-1"
+                              >
+                                <Check className="w-3 h-3 mr-1" />
+                                Booked
+                              </Badge>
+                            ) : (
+                              <Button
+                                size="sm"
+                                className="mt-2"
+                                onClick={(e) => {
+                                  e.stopPropagation(); // Prevent card click
+                                  handleBookSession(session);
+                                }}
+                              >
+                                Book
+                              </Button>
+                            )}
                           </div>
                         </div>
-                        <div className="flex flex-col items-end">
-                          <Badge
-                            variant={
-                              session.availableSpots > 3
-                                ? "outline"
-                                : "secondary"
-                            }
-                          >
-                            {session.availableSpots} spots
-                          </Badge>
-                          <Button
-                            size="sm"
-                            className="mt-2"
-                            onClick={(e) => {
-                              e.stopPropagation(); // Prevent card click
-                              handleBookSession(session);
-                            }}
-                          >
-                            Book
-                          </Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))
+                      </CardContent>
+                    </Card>
+                  );
+                })
               )}
             </div>
           ) : (

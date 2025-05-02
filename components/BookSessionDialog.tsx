@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import { format } from "date-fns";
 import { useAuth } from "@/contexts/AuthContext";
-import { useActivePackages } from "@/hooks/useApi";
+import { useActivePackages, useSubscriptions } from "@/hooks/useApi";
 import { useCreateBookingWithBrand } from "@/hooks/useMutations";
 import { toast } from "react-hot-toast";
 
@@ -63,6 +63,10 @@ const BookSessionDialog: React.FC<BookSessionDialogProps> = ({
   // Get active packages for the user
   const { data: packages, isLoading: packagesLoading } = useActivePackages();
 
+  // Get active subscriptions for the user
+  const { data: subscriptions, isLoading: subscriptionsLoading } =
+    useSubscriptions();
+
   // Use the enhanced booking mutation that supports brandId
   const { mutate: createBooking } = useCreateBookingWithBrand();
 
@@ -114,6 +118,9 @@ const BookSessionDialog: React.FC<BookSessionDialogProps> = ({
   const sessionDate = new Date(session.dateTime);
   const formattedDate = format(sessionDate, "EEEE, MMMM d, yyyy");
   const formattedTime = format(sessionDate, "h:mm a");
+
+  // Check if user has an active subscription
+  const hasSubscription = subscriptions && subscriptions.length > 0;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -176,14 +183,20 @@ const BookSessionDialog: React.FC<BookSessionDialogProps> = ({
                 </label>
               ) : null}
 
-              {/* Subscription option would be added here if implemented */}
-              {/* <label className="flex items-center space-x-2 border rounded-md p-3 cursor-pointer">
-                <RadioGroupItem value="subscription" id="subscription" />
-                <div className="flex items-center">
-                  <CheckCircle className="h-4 w-4 mr-2" />
-                  Use Subscription
+              {/* Subscription option */}
+              {subscriptionsLoading ? (
+                <div className="flex justify-center p-3">
+                  <LoadingSpinner size="sm" />
                 </div>
-              </label> */}
+              ) : hasSubscription ? (
+                <label className="flex items-center space-x-2 border rounded-md p-3 cursor-pointer">
+                  <RadioGroupItem value="subscription" id="subscription" />
+                  <div className="flex items-center">
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                    Use Subscription
+                  </div>
+                </label>
+              ) : null}
             </RadioGroup>
           </div>
 
@@ -213,6 +226,21 @@ const BookSessionDialog: React.FC<BookSessionDialogProps> = ({
               </RadioGroup>
             </div>
           )}
+
+          {/* Subscription Info (if subscription) */}
+          {bookingMethod === "subscription" &&
+            subscriptions &&
+            subscriptions.length > 0 && (
+              <div className="p-3 border rounded-md bg-accent/10">
+                <div className="flex items-center mb-2">
+                  <CheckCircle className="h-4 w-4 mr-2 text-primary" />
+                  <span className="font-medium">Active Subscription</span>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  You'll be booking this session using your active subscription.
+                </p>
+              </div>
+            )}
         </div>
 
         <DialogFooter>

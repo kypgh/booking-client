@@ -2,29 +2,18 @@
 import React, { useState } from "react";
 import { useRouter } from "next/router";
 import { format, parseISO, isAfter, addMinutes } from "date-fns";
-import {
-  Calendar,
-  Clock,
-  Users,
-  MapPin,
-  Info,
-  AlertCircle,
-  CheckCircle,
-  X,
-} from "lucide-react";
+import { Calendar, Clock, Users, Info, AlertCircle, Check } from "lucide-react";
 import BrandLayout from "@/components/layouts/BrandLayout";
 import { useSessionDetailsByBrand } from "@/hooks/useApi";
-import { useCreateBookingWithBrand } from "@/hooks/useMutations";
-import { toast } from "react-hot-toast";
 import { useBrand } from "@/contexts/BrandContext";
 
 // UI Components
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import BookSessionDialog from "@/components/BookSessionDialog";
 import { useAuth } from "@/contexts/AuthContext";
+import { useSessionBookingStatus } from "@/hooks/useSessionBookingStatus";
 
 export default function SessionDetailPage() {
   const router = useRouter();
@@ -39,6 +28,8 @@ export default function SessionDetailPage() {
     isLoading,
     error,
   } = useSessionDetailsByBrand(id as string, activeBrandId as string);
+
+  const { isSessionBooked } = useSessionBookingStatus();
 
   // Format time function
   const formatTime = (dateString: string) => {
@@ -135,11 +126,21 @@ export default function SessionDetailPage() {
               {session.status.charAt(0).toUpperCase() + session.status.slice(1)}
             </Badge>
 
-            {/* Show booking button if session is in future and has available spots */}
-            {isSessionFuture(session.dateTime) &&
-              session.availableSpots > 0 && (
-                <Button onClick={handleBookSession}>Book Session</Button>
-              )}
+            {/* Show booking button if session is in future, has available spots, and not already booked */}
+            {isSessionFuture(session.dateTime) && (
+              <>
+                {isSessionBooked(session._id) ? (
+                  <Badge variant="success" className="px-3 py-1.5">
+                    <Check className="w-4 h-4 mr-1.5" />
+                    Booked
+                  </Badge>
+                ) : (
+                  session.availableSpots > 0 && (
+                    <Button onClick={handleBookSession}>Book Session</Button>
+                  )
+                )}
+              </>
+            )}
           </div>
 
           {/* Session Info Card */}
@@ -299,7 +300,7 @@ export default function SessionDetailPage() {
       ) : null}
 
       {/* Booking Dialog */}
-      {session && (
+      {session && !isSessionBooked(session._id) && (
         <BookSessionDialog
           isOpen={isBookDialogOpen}
           onClose={() => setIsBookDialogOpen(false)}

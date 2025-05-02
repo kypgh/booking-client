@@ -86,6 +86,7 @@ export interface BookingData {
   };
   session: {
     _id: string;
+    id: string;
     dateTime: string;
     duration: number;
     capacity: number;
@@ -294,9 +295,10 @@ export const usePackageBookings = (packageBookingId: string) => {
 
 export const useSubscriptions = () => {
   const authCheck = useAuthCheck();
+  const { activeBrandId } = useBrand();
 
   return useQuery({
-    queryKey: ["subscriptions"],
+    queryKey: ["subscriptions", activeBrandId],
     queryFn: async () => {
       const response = await PackagesApi.getSubscriptions();
       return response.data;
