@@ -81,7 +81,7 @@ export default function PackagesPage() {
   const { data: ownedSubscriptionIds, isLoading: ownedSubscriptionsLoading } =
     useOwnedSubscriptions();
 
-  console.log(subscriptionPlans, ownedSubscriptionIds);
+  console.log(ownedSubscriptionIds, subscriptionPlans);
 
   // Purchase mutations
   const { mutate: purchasePackage, isPending: isPurchasingPackage } =
