@@ -83,7 +83,6 @@ const ClassesApi = {
       endDate?: string;
       brandId?: string | null;
       classId?: string;
-      instructorId?: string;
     } = {}
   ): Promise<
     ApiResponse<{

@@ -192,24 +192,7 @@ export default function SessionDetailPage() {
             </CardContent>
           </Card>
 
-          {/* Instructor Card */}
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base">Instructor</CardTitle>
-            </CardHeader>
-            <CardContent className="p-4 pt-0">
-              <div className="flex items-center">
-                <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary mr-3">
-                  {session.class.instructor?.name?.charAt(0) || "I"}
-                </div>
-                <div>
-                  <div className="font-medium">
-                    {session.class.instructor?.name}
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+
 
           {/* Cancellation Policy */}
           <Card>
@@ -248,8 +231,8 @@ export default function SessionDetailPage() {
             </Card>
           )}
 
-          {/* Attendees - Only show if user is staff or instructor */}
-          {session.attendees && user?.roles?.isInstructor && (
+          {/* Attendees */}
+          {session.attendees && (
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-base">
@@ -311,10 +294,6 @@ export default function SessionDetailPage() {
             class: {
               id: session.class._id,
               name: session.class.name,
-              instructor: {
-                id: session.class.instructor?._id,
-                name: session.class.instructor?.name,
-              },
             },
           }}
           brandId={activeBrandId as string}

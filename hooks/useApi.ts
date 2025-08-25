@@ -20,10 +20,6 @@ export interface Session {
   class: {
     id: string;
     name: string;
-    instructor: {
-      id: string;
-      name: string;
-    };
   };
   capacity: number;
   availableSpots: number;
@@ -35,14 +31,6 @@ export interface ClassData {
   name: string;
   description: string;
   duration: number;
-  instructor: {
-    _id: string;
-    name: string;
-    roles?: {
-      isAdmin?: boolean;
-      isInstructor?: boolean;
-    };
-  };
   businessType: "fixed" | "hourly";
   capacity: number;
   status: string;

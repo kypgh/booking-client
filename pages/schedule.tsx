@@ -228,10 +228,7 @@ export default function SchedulePage() {
                                 {session.duration}min
                               </span>
                             </div>
-                            <div className="flex items-center text-sm text-muted-foreground mt-1">
-                              <User size={14} className="mr-1" />
-                              <span>{session.class.instructor.name}</span>
-                            </div>
+
                           </div>
                           <div className="flex flex-col items-end">
                             <Badge

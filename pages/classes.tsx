@@ -183,12 +183,7 @@ const ClassCard: React.FC<ClassCardProps> = ({ classData, onClick }) => {
           </div>
         </div>
 
-        <div className="mt-3 pt-3 border-t border-border">
-          <div className="text-sm">
-            <span className="text-muted-foreground">Instructor: </span>
-            <span>{classData.instructor?.name || "TBD"}</span>
-          </div>
-        </div>
+
       </CardContent>
     </Card>
   );

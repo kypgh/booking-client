@@ -13,10 +13,6 @@ export interface SessionDetail {
     _id: string;
     name: string;
     description: string;
-    instructor: {
-      _id: string;
-      name: string;
-    };
     duration: number;
     capacity: number;
     cancellationPolicy: {

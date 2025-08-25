@@ -211,32 +211,7 @@ export default function ClassDetailsPage() {
             </Card>
           )}
 
-          {/* Instructor Card */}
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base flex items-center">
-                <Users size={16} className="mr-2" />
-                Instructor
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-4 pt-0">
-              <div className="flex items-center">
-                <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary mr-3">
-                  {classData.instructor?.name?.charAt(0) || "I"}
-                </div>
-                <div>
-                  <div className="font-medium">
-                    {classData.instructor?.name || "TBD"}
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                    {classData.instructor?.roles?.isInstructor
-                      ? "Certified Instructor"
-                      : "Staff"}
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+
 
           {/* Upcoming Sessions */}
           <div className="mt-6">

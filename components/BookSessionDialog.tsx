@@ -36,10 +36,6 @@ interface BookSessionDialogProps {
     class: {
       id: string;
       name: string;
-      instructor: {
-        id: string;
-        name: string;
-      };
     };
   };
   brandId?: string;
@@ -144,10 +140,7 @@ const BookSessionDialog: React.FC<BookSessionDialogProps> = ({
                   {formattedTime} • {session.duration} minutes
                 </span>
               </div>
-              <div className="flex items-center">
-                <User className="h-4 w-4 mr-2 text-muted-foreground" />
-                <span>Instructor: {session.class.instructor.name}</span>
-              </div>
+
             </div>
           </div>
 

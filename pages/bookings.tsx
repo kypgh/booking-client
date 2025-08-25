@@ -202,12 +202,7 @@ export default function BookingsPage() {
                 </span>
               </div>
 
-              <div className="flex items-center text-sm text-muted-foreground mt-1">
-                <User className="h-4 w-4 mr-1" />
-                <span>
-                  Instructor: {booking.session.class?.instructor?.name || "TBD"}
-                </span>
-              </div>
+
 
               {isPackageBooking && (
                 <div className="mt-2 text-xs inline-flex items-center px-2 py-1 rounded-full bg-primary/10 text-primary">
@@ -292,8 +287,7 @@ export default function BookingsPage() {
           ) : pendingBookings.length > 0 ? (
             <div>
               <p className="text-sm text-muted-foreground mb-4">
-                These bookings are awaiting confirmation from the instructor or
-                staff.
+                These bookings are awaiting confirmation.
               </p>
               <div>
                 {pendingBookings.map((booking) =>

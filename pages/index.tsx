@@ -111,10 +111,7 @@ export default function HomePage() {
                           {format(parseISO(session.dateTime), "h:mm a")}
                         </span>
                       </div>
-                      <div className="text-sm text-muted-foreground mt-1 flex items-center">
-                        <User size={14} className="mr-1" />
-                        <span>{session.class.instructor.name}</span>
-                      </div>
+
                     </div>
                     <Button
                       size="sm"
