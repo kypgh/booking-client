@@ -8,6 +8,7 @@ import React, {
 } from "react";
 import { useRouter } from "next/router";
 import { useAuth, Brand as AuthBrand } from "./AuthContext";
+import BrandApi from "../api/brandApi";
 
 // Define the Brand interface to be compatible with AuthContext.Brand
 export interface Brand {
@@ -17,6 +18,18 @@ export interface Brand {
   description?: string;
   logo?: string;
   status?: string;
+  address?: {
+    street?: string;
+    city?: string;
+    state?: string;
+    zipCode?: string;
+    country?: string;
+  };
+  contact?: {
+    phone?: string;
+    website?: string;
+  };
+  email?: string;
   [key: string]: any; // Allow for additional properties
 }
 
@@ -70,7 +83,36 @@ export const BrandProvider = ({ children }: { children: ReactNode }) => {
       };
       setActiveBrand(brandData);
     } else {
-      setActiveBrand(null);
+      // If we have an activeBrandId but no brand details, fetch from API
+      if (activeBrandId) {
+        BrandApi.getInfoById(activeBrandId)
+          .then((response) => {
+            const brandData = response.data || response; // Handle both nested and direct response
+            
+            if (brandData && brandData.name) {
+              const apiBrandData: Brand = {
+                _id: brandData._id || brandData.id,
+                id: brandData.id || brandData._id,
+                name: brandData.name,
+                description: brandData.description,
+                logo: brandData.logo,
+                status: brandData.status,
+                address: brandData.address,
+                contact: brandData.contact,
+                email: brandData.email,
+              };
+              setActiveBrand(apiBrandData);
+            } else {
+              setActiveBrand(null);
+            }
+          })
+          .catch((error) => {
+            console.error("Error fetching brand details:", error);
+            setActiveBrand(null);
+          });
+      } else {
+        setActiveBrand(null);
+      }
     }
   }, [activeBrandId, user]);
 
@@ -85,7 +127,27 @@ export const BrandProvider = ({ children }: { children: ReactNode }) => {
       return;
     }
 
-    // Priority 2: Get from user's brands if authenticated
+    // Priority 2: Get from localStorage if available and user has that brand
+    if (typeof window !== "undefined") {
+      const savedBrandId = localStorage.getItem("activeBrandId");
+      if (savedBrandId && isAuthenticated && user?.brands) {
+        const hasThisBrand = user.brands.some((brand: any) => {
+          const brandId = typeof brand === "string" ? brand : brand._id || brand.id;
+          return brandId === savedBrandId;
+        });
+        
+        if (hasThisBrand) {
+          setActiveBrandId(savedBrandId);
+          setIsLoading(false);
+          return;
+        } else {
+          // Remove invalid saved brand ID
+          localStorage.removeItem("activeBrandId");
+        }
+      }
+    }
+
+    // Priority 3: Get from user's brands if authenticated
     if (isAuthenticated && user?.brands && user.brands.length > 0) {
       // Handle both string IDs and object IDs
       const firstBrand = user.brands[0];

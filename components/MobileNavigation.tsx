@@ -18,9 +18,6 @@ export default function MobileNavigation() {
     if (path === currentPath) return true;
 
     // Handle special cases
-    if (path === "/classes" && currentPath.startsWith("/classes")) return true;
-    if (path === "/schedule" && currentPath.startsWith("/schedule"))
-      return true;
     if (path === "/packages" && currentPath.startsWith("/packages"))
       return true;
     if (path === "/bookings" && currentPath.startsWith("/bookings"))
@@ -33,9 +30,7 @@ export default function MobileNavigation() {
   // Generate navigation links
   const navLinks = [
     { label: "Home", path: "/", icon: Home },
-    { label: "Classes", path: "/classes", icon: List },
-    { label: "Schedule", path: "/schedule", icon: Calendar },
-    { label: "Packages", path: "/packages", icon: Package },
+    { label: "Plans", path: "/packages", icon: Package },
     { label: "Bookings", path: "/bookings", icon: Clock },
     { label: "Profile", path: "/profile", icon: User },
   ];

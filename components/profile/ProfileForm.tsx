@@ -14,6 +14,8 @@ import LoadingSpinner from "@/components/ui/loading-spinner";
 
 interface ProfileFormProps {
   profileData?: ProfileData;
+  onCancel?: () => void;
+  onSave?: () => void;
 }
 
 type ProfileFormValues = {
@@ -29,7 +31,11 @@ type ProfileFormValues = {
   smsNotifications: boolean;
 };
 
-const ProfileForm: React.FC<ProfileFormProps> = ({ profileData }) => {
+const ProfileForm: React.FC<ProfileFormProps> = ({ 
+  profileData, 
+  onCancel,
+  onSave 
+}) => {
   const [isEditing, setIsEditing] = useState(false);
   const { mutate: updateProfile, isPending: isUpdating } = useUpdateProfile();
 
@@ -102,6 +108,7 @@ const ProfileForm: React.FC<ProfileFormProps> = ({ profileData }) => {
       onSuccess: () => {
         toast.success("Profile updated successfully");
         setIsEditing(false);
+        onSave?.();
       },
       onError: (error: any) => {
         toast.error(error.message || "Failed to update profile");
@@ -113,125 +120,11 @@ const ProfileForm: React.FC<ProfileFormProps> = ({ profileData }) => {
     // Reset form values and exit edit mode
     reset();
     setIsEditing(false);
+    onCancel?.();
   };
 
   return (
-    <div>
-      {!isEditing ? (
-        // View-only mode
-        <div className="space-y-6">
-          <div className="flex justify-between">
-            <h3 className="text-lg font-medium">Personal Information</h3>
-            <Button onClick={() => setIsEditing(true)}>Edit Profile</Button>
-          </div>
-
-          <div className="grid gap-4">
-            <div>
-              <h4 className="font-medium">Name</h4>
-              <p className="text-muted-foreground">
-                {profileData?.name || "Not provided"}
-              </p>
-            </div>
-
-            <div>
-              <h4 className="font-medium">Email</h4>
-              <p className="text-muted-foreground">
-                {profileData?.email || "Not provided"}
-              </p>
-            </div>
-
-            <div>
-              <h4 className="font-medium">Date of Birth</h4>
-              <p className="text-muted-foreground">
-                {profileData?.dateOfBirth
-                  ? new Date(profileData.dateOfBirth).toLocaleDateString()
-                  : "Not provided"}
-              </p>
-            </div>
-
-            <div className="border-t pt-4">
-              <h4 className="font-medium mb-2">Emergency Contact</h4>
-              {profileData?.emergencyContact?.name ? (
-                <div className="space-y-1">
-                  <p>
-                    <span className="text-muted-foreground">Name: </span>
-                    {profileData.emergencyContact.name}
-                  </p>
-                  <p>
-                    <span className="text-muted-foreground">Phone: </span>
-                    {profileData.emergencyContact.phone || "Not provided"}
-                  </p>
-                  <p>
-                    <span className="text-muted-foreground">
-                      Relationship:{" "}
-                    </span>
-                    {profileData.emergencyContact.relationship ||
-                      "Not provided"}
-                  </p>
-                </div>
-              ) : (
-                <p className="text-muted-foreground">
-                  No emergency contact information
-                </p>
-              )}
-            </div>
-
-            <div className="border-t pt-4">
-              <h4 className="font-medium mb-2">Health Information</h4>
-              <div className="space-y-2">
-                <div>
-                  <p className="font-medium text-sm">Medical Conditions:</p>
-                  <p className="text-muted-foreground">
-                    {profileData?.healthInfo?.medicalConditions?.length
-                      ? profileData.healthInfo.medicalConditions.join(", ")
-                      : "None provided"}
-                  </p>
-                </div>
-                <div>
-                  <p className="font-medium text-sm">Allergies:</p>
-                  <p className="text-muted-foreground">
-                    {profileData?.healthInfo?.allergies?.length
-                      ? profileData.healthInfo.allergies.join(", ")
-                      : "None provided"}
-                  </p>
-                </div>
-                <div>
-                  <p className="font-medium text-sm">Medications:</p>
-                  <p className="text-muted-foreground">
-                    {profileData?.healthInfo?.medications?.length
-                      ? profileData.healthInfo.medications.join(", ")
-                      : "None provided"}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="border-t pt-4">
-              <h4 className="font-medium mb-2">Notification Preferences</h4>
-              <div className="space-y-1">
-                <p>
-                  <span className="text-muted-foreground">
-                    Email notifications:{" "}
-                  </span>
-                  {profileData?.preferences?.notificationPreferences?.email
-                    ? "Enabled"
-                    : "Disabled"}
-                </p>
-                <p>
-                  <span className="text-muted-foreground">
-                    SMS notifications:{" "}
-                  </span>
-                  {profileData?.preferences?.notificationPreferences?.sms
-                    ? "Enabled"
-                    : "Disabled"}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      ) : (
-        // Edit mode
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           <div className="space-y-4">
             <div className="grid gap-2">
               <Label htmlFor="name">Name</Label>
@@ -346,29 +239,27 @@ const ProfileForm: React.FC<ProfileFormProps> = ({ profileData }) => {
             </div>
           </div>
 
-          <div className="flex justify-end gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleCancel}
-              disabled={isUpdating}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" disabled={isUpdating}>
-              {isUpdating ? (
-                <>
-                  <LoadingSpinner size="sm" className="mr-2" />
-                  Saving...
-                </>
-              ) : (
-                "Save Changes"
-              )}
-            </Button>
-          </div>
-        </form>
-      )}
-    </div>
+        <div className="flex justify-end gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleCancel}
+            disabled={isUpdating}
+          >
+            Cancel
+          </Button>
+          <Button type="submit" disabled={isUpdating}>
+            {isUpdating ? (
+              <>
+                <LoadingSpinner size="sm" className="mr-2" />
+                Saving...
+              </>
+            ) : (
+              "Save Changes"
+            )}
+          </Button>
+        </div>
+      </form>
   );
 };
 

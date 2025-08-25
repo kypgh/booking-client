@@ -6,6 +6,7 @@ import MobileNavigation from "../MobileNavigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { ChevronLeft } from "lucide-react";
 import LoadingSpinner from "../ui/loading-spinner";
+
 import { APP_NAME } from "@/lib/envs";
 
 export type MainLayoutProps = {

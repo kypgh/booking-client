@@ -14,16 +14,66 @@
   --secondary: #a0b4ff;
   --secondary-foreground: #1a1a1a;
 
-  --muted: #f3f4f6;
-  --muted-foreground: #4b5563;
+  --muted: #f8fafc;
+  --muted-foreground: #64748b;
 
-  --accent: #e7ebff;
-  --accent-foreground: #1a1a1a;
+  --accent: #f1f5f9;
+  --accent-foreground: #0f172a;
 
   --destructive: #ef4444;
-  --border: #e5e7eb;
-  --input: #e5e7eb;
+  --destructive-foreground: #ffffff;
+  
+  --border: #e2e8f0;
+  --input: #e2e8f0;
   --ring: #5c7aea;
+
+  /* Status Colors */
+  --success: #10b981;
+  --success-foreground: #ffffff;
+  
+  --warning: #f59e0b;
+  --warning-foreground: #ffffff;
+  
+  --info: #3b82f6;
+  --info-foreground: #ffffff;
+  
+  /* Systematic Color Palette */
+  --color-1: #5c7aea;    /* Primary Blue */
+  --color-1-foreground: #ffffff;
+  --color-1-light: #a5b4fc;
+  --color-1-dark: #4338ca;
+  
+  --color-2: #8b5cf6;    /* Purple */
+  --color-2-foreground: #ffffff;
+  --color-2-light: #c4b5fd;
+  --color-2-dark: #7c3aed;
+  
+  --color-3: #10b981;    /* Green */
+  --color-3-foreground: #ffffff;
+  --color-3-light: #6ee7b7;
+  --color-3-dark: #059669;
+  
+  --color-4: #f59e0b;    /* Orange */
+  --color-4-foreground: #ffffff;
+  --color-4-light: #fbbf24;
+  --color-4-dark: #d97706;
+  
+  --color-5: #ef4444;    /* Red */
+  --color-5-foreground: #ffffff;
+  --color-5-light: #f87171;
+  --color-5-dark: #dc2626;
+  
+  --color-6: #06b6d4;    /* Cyan */
+  --color-6-foreground: #ffffff;
+  --color-6-light: #67e8f9;
+  --color-6-dark: #0891b2;
+  
+  /* Gradients */
+  --gradient-1: linear-gradient(135deg, var(--color-1) 0%, var(--color-2) 100%);
+  --gradient-2: linear-gradient(135deg, var(--color-2) 0%, var(--color-3) 100%);
+  --gradient-3: linear-gradient(135deg, var(--color-3) 0%, var(--color-6) 100%);
+  --gradient-4: linear-gradient(135deg, var(--color-4) 0%, var(--color-5) 100%);
+  --gradient-primary: var(--gradient-1);
 }
 
 @theme inline {
@@ -46,22 +96,57 @@
   --color-accent-foreground: var(--accent-foreground);
 
   --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
 
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
 
+  /* Status Colors */
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+
+  /* Systematic Color Palette */
+  --color-color-1: var(--color-1);
+  --color-color-1-foreground: var(--color-1-foreground);
+  --color-color-1-light: var(--color-1-light);
+  --color-color-1-dark: var(--color-1-dark);
+  
+  --color-color-2: var(--color-2);
+  --color-color-2-foreground: var(--color-2-foreground);
+  --color-color-2-light: var(--color-2-light);
+  --color-color-2-dark: var(--color-2-dark);
+  
+  --color-color-3: var(--color-3);
+  --color-color-3-foreground: var(--color-3-foreground);
+  --color-color-3-light: var(--color-3-light);
+  --color-color-3-dark: var(--color-3-dark);
+  
+  --color-color-4: var(--color-4);
+  --color-color-4-foreground: var(--color-4-foreground);
+  --color-color-4-light: var(--color-4-light);
+  --color-color-4-dark: var(--color-4-dark);
+  
+  --color-color-5: var(--color-5);
+  --color-color-5-foreground: var(--color-5-foreground);
+  --color-color-5-light: var(--color-5-light);
+  --color-color-5-dark: var(--color-5-dark);
+  
+  --color-color-6: var(--color-6);
+  --color-color-6-foreground: var(--color-6-foreground);
+  --color-color-6-light: var(--color-6-light);
+  --color-color-6-dark: var(--color-6-dark);
+
   --radius-sm: calc(var(--radius, 0.625rem) - 4px);
   --radius-md: calc(var(--radius, 0.625rem) - 2px);
   --radius-lg: var(--radius, 0.625rem);
   --radius-xl: calc(var(--radius, 0.625rem) + 4px);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    /* --background: #0a0a0a; */
-    /* --foreground: #ededed; */
-  }
 }
 
 body {
@@ -71,22 +156,69 @@ body {
 }
 
 .dark {
-  --background: #1a1a1a;
-  --foreground: #f3f4f6;
-  --card: #2a2a2a;
-  --card-foreground: #f3f4f6;
-  --primary: #5c7aea;
+  --background: #0f172a;
+  --foreground: #f1f5f9;
+  --card: #1e293b;
+  --card-foreground: #f1f5f9;
+  --primary: #6366f1;
   --primary-foreground: #ffffff;
-  --secondary: #3b4dbf;
+  --secondary: #7c3aed;
   --secondary-foreground: #ffffff;
-  --muted: #374151;
-  --muted-foreground: #9ca3af;
-  --accent: #4f46e5;
-  --accent-foreground: #e0e7ff;
-  --destructive: #dc2626;
-  --border: #374151;
-  --input: #4b5563;
+  --muted: #334155;
+  --muted-foreground: #94a3b8;
+  --accent: #475569;
+  --accent-foreground: #f1f5f9;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --border: #334155;
+  --input: #334155;
   --ring: #6366f1;
+
+  /* Status Colors for Dark Mode */
+  --success: #22c55e;
+  --success-foreground: #ffffff;
+  --warning: #eab308;
+  --warning-foreground: #000000;
+  --info: #3b82f6;
+  --info-foreground: #ffffff;
+
+  /* Systematic Color Palette - Dark Mode */
+  --color-1: #6366f1;    /* Primary Blue */
+  --color-1-foreground: #ffffff;
+  --color-1-light: #a5b4fc;
+  --color-1-dark: #4338ca;
+  
+  --color-2: #8b5cf6;    /* Purple */
+  --color-2-foreground: #ffffff;
+  --color-2-light: #c4b5fd;
+  --color-2-dark: #7c3aed;
+  
+  --color-3: #22c55e;    /* Green */
+  --color-3-foreground: #ffffff;
+  --color-3-light: #86efac;
+  --color-3-dark: #16a34a;
+  
+  --color-4: #eab308;    /* Yellow/Orange */
+  --color-4-foreground: #000000;
+  --color-4-light: #facc15;
+  --color-4-dark: #ca8a04;
+  
+  --color-5: #ef4444;    /* Red */
+  --color-5-foreground: #ffffff;
+  --color-5-light: #f87171;
+  --color-5-dark: #dc2626;
+  
+  --color-6: #06b6d4;    /* Cyan */
+  --color-6-foreground: #ffffff;
+  --color-6-light: #67e8f9;
+  --color-6-dark: #0891b2;
+
+  /* Dark Mode Gradients */
+  --gradient-1: linear-gradient(135deg, var(--color-1) 0%, var(--color-2) 100%);
+  --gradient-2: linear-gradient(135deg, var(--color-2) 0%, var(--color-3) 100%);
+  --gradient-3: linear-gradient(135deg, var(--color-3) 0%, var(--color-6) 100%);
+  --gradient-4: linear-gradient(135deg, var(--color-4) 0%, var(--color-5) 100%);
+  --gradient-primary: var(--gradient-1);
 }
 
 @layer base {
@@ -95,5 +227,104 @@ body {
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@layer components {
+  /* Gradient Backgrounds */
+  .gradient-primary {
+    background: var(--gradient-primary);
+  }
+  
+  .gradient-1 {
+    background: var(--gradient-1);
+  }
+  
+  .gradient-2 {
+    background: var(--gradient-2);
+  }
+  
+  .gradient-3 {
+    background: var(--gradient-3);
+  }
+  
+  .gradient-4 {
+    background: var(--gradient-4);
+  }
+
+  /* Systematic Color Utilities */
+  .color-1 {
+    @apply bg-[var(--color-1)] text-[var(--color-1-foreground)];
+  }
+  
+  .color-2 {
+    @apply bg-[var(--color-2)] text-[var(--color-2-foreground)];
+  }
+  
+  .color-3 {
+    @apply bg-[var(--color-3)] text-[var(--color-3-foreground)];
+  }
+  
+  .color-4 {
+    @apply bg-[var(--color-4)] text-[var(--color-4-foreground)];
+  }
+  
+  .color-5 {
+    @apply bg-[var(--color-5)] text-[var(--color-5-foreground)];
+  }
+  
+  .color-6 {
+    @apply bg-[var(--color-6)] text-[var(--color-6-foreground)];
+  }
+
+  /* Card Variants with Systematic Colors */
+  .card-color-1 {
+    @apply border-l-4 border-l-[var(--color-1)] bg-gradient-to-r from-[var(--color-1)]/5 to-background;
+  }
+  
+  .card-color-2 {
+    @apply border-l-4 border-l-[var(--color-2)] bg-gradient-to-r from-[var(--color-2)]/5 to-background;
+  }
+  
+  .card-color-3 {
+    @apply border-l-4 border-l-[var(--color-3)] bg-gradient-to-r from-[var(--color-3)]/5 to-background;
+  }
+  
+  .card-color-4 {
+    @apply border-l-4 border-l-[var(--color-4)] bg-gradient-to-r from-[var(--color-4)]/5 to-background;
+  }
+  
+  .card-color-5 {
+    @apply border-l-4 border-l-[var(--color-5)] bg-gradient-to-r from-[var(--color-5)]/5 to-background;
+  }
+  
+  .card-color-6 {
+    @apply border-l-4 border-l-[var(--color-6)] bg-gradient-to-r from-[var(--color-6)]/5 to-background;
+  }
+
+  /* Status Indicators */
+  .status-success {
+    @apply bg-[var(--success)] text-[var(--success-foreground)];
+  }
+  
+  .status-warning {
+    @apply bg-[var(--warning)] text-[var(--warning-foreground)];
+  }
+  
+  .status-info {
+    @apply bg-[var(--info)] text-[var(--info-foreground)];
+  }
+
+  /* Animated Gradients */
+  .gradient-animated {
+    background: linear-gradient(-45deg, var(--color-1), var(--color-2), var(--color-4), var(--color-3));
+    background-size: 400% 400%;
+    animation: gradientShift 8s ease infinite;
+  }
+  
+  @keyframes gradientShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
   }
 }

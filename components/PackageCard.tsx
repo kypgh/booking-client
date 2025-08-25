@@ -14,6 +14,24 @@ const PackageCard: React.FC<PackageCardProps> = ({
   packageData,
   onViewDetails,
 }) => {
+  const formatDate = (date: string | null | undefined) => {
+    if (!date) return "Not set";
+    
+    try {
+      const dateObj = new Date(date);
+      
+      // Check if the date is valid
+      if (isNaN(dateObj.getTime())) {
+        return "Invalid date";
+      }
+      
+      return format(dateObj, "MMM d, yyyy");
+    } catch (error) {
+      console.error("Date formatting error:", error, "Date value:", date);
+      return "Invalid date";
+    }
+  };
+
   return (
     <Card className="w-full">
       <CardHeader className="pb-2">
@@ -41,7 +59,7 @@ const PackageCard: React.FC<PackageCardProps> = ({
             <div className="flex justify-between mb-1">
               <span className="text-muted-foreground">Expires</span>
               <span>
-                {format(new Date(packageData.expiryDate), "MMM d, yyyy")}
+                {formatDate(packageData.expiryDate)}
               </span>
             </div>
             <div className="text-xs text-muted-foreground">

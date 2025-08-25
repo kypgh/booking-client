@@ -15,7 +15,11 @@ type PasswordFormValues = {
   confirmPassword: string;
 };
 
-const PasswordForm: React.FC = () => {
+interface PasswordFormProps {
+  onCancel?: () => void;
+}
+
+const PasswordForm: React.FC<PasswordFormProps> = ({ onCancel }) => {
   const { mutate: updatePassword, isPending: isUpdating } = useUpdatePassword();
 
   const {
@@ -34,6 +38,7 @@ const PasswordForm: React.FC = () => {
       onSuccess: () => {
         toast.success("Password updated successfully");
         reset(); // Reset the form
+        onCancel?.(); // Close the form
       },
       onError: (error: any) => {
         toast.error(error.message || "Failed to update password");
@@ -107,7 +112,17 @@ const PasswordForm: React.FC = () => {
         </ul>
       </div>
 
-      <div className="flex justify-end">
+      <div className="flex justify-end gap-2">
+        {onCancel && (
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onCancel}
+            disabled={isUpdating}
+          >
+            Cancel
+          </Button>
+        )}
         <Button type="submit" disabled={isUpdating}>
           {isUpdating ? (
             <>
