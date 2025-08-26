@@ -139,7 +139,10 @@ const PackagesApi = {
     }
   },
 
-  // Get client's subscriptions
+  // Legacy methods - kept for backward compatibility but deprecated
+  // Use SubscriptionPlanApi for new subscription functionality
+  
+  // Get client's subscriptions (deprecated - use SubscriptionPlanApi.getActiveSubscriptionBookings)
   getSubscriptions: async (): Promise<ApiResponse<SubscriptionData[]>> => {
     try {
       const response = await agent.get("/subscription");
@@ -150,7 +153,7 @@ const PackagesApi = {
     }
   },
 
-  // Get subscription plans for a brand
+  // Get subscription plans for a brand (deprecated - use SubscriptionPlanApi.getAvailableSubscriptionPlans)
   getSubscriptionPlans: async (
     brandId: string
   ): Promise<ApiResponse<SubscriptionData[]>> => {
@@ -165,7 +168,7 @@ const PackagesApi = {
     }
   },
 
-  // Purchase a subscription
+  // Purchase a subscription (deprecated - use SubscriptionPlanApi.purchaseSubscriptionPlan)
   purchaseSubscription: async (
     planId: string,
     brandId: string | null,
@@ -200,6 +203,7 @@ const PackagesApi = {
       throw error;
     }
   },
+  // Check subscription ownership (deprecated - use SubscriptionPlanApi.checkSubscriptionPlanOwnership)
   checkSubscriptionOwnership: async (
     planId: string
   ): Promise<ApiResponse<{ hasActivePlan: boolean }>> => {

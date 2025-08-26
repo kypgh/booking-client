@@ -6,6 +6,8 @@ import { BrandProvider } from "@/contexts/BrandContext";
 import { Toaster } from "react-hot-toast";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+import { Elements } from "@stripe/react-stripe-js";
+import getStripe from "@/lib/stripe";
 import { useState } from "react";
 
 export default function App({ Component, pageProps }: AppProps) {
@@ -24,16 +26,18 @@ export default function App({ Component, pageProps }: AppProps) {
   );
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <BrandProvider>
-          <Component {...pageProps} />
-          <Toaster position="top-center" />
-        </BrandProvider>
-      </AuthProvider>
-      {process.env.NODE_ENV !== "production" && (
-        <ReactQueryDevtools initialIsOpen={false} />
-      )}
-    </QueryClientProvider>
+    <Elements stripe={getStripe()}>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <BrandProvider>
+            <Component {...pageProps} />
+            <Toaster position="top-center" />
+          </BrandProvider>
+        </AuthProvider>
+        {process.env.NODE_ENV !== "production" && (
+          <ReactQueryDevtools initialIsOpen={false} />
+        )}
+      </QueryClientProvider>
+    </Elements>
   );
 }

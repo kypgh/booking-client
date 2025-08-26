@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import BookingsApi from "@/api/bookingsApi";
 import PackagesApi from "@/api/packagesApi";
 import InvitationApi from "@/api/invitationApi";
+import PaymentApi, { CreatePaymentIntentRequest } from "@/api/paymentApi";
 import { useAuth } from "@/contexts/AuthContext";
 import ProfileApi, { ProfileUpdateData } from "@/api/profileApi";
 import { useBrand } from "@/contexts/BrandContext";
@@ -9,8 +10,9 @@ import { useBrand } from "@/contexts/BrandContext";
 // Types
 export interface BookingRequest {
   sessionId: string;
-  bookingType: "monthly" | "individual" | "subscription";
-  packageBookingId?: string;
+  bookingType: "credits" | "subscription";
+  packageBookingId?: string; // Required for credits bookings
+  subscriptionId?: string; // Required for subscription bookings
 }
 
 export interface PackagePurchaseRequest {
@@ -21,11 +23,13 @@ export interface PackagePurchaseRequest {
   };
 }
 // Enhanced booking request type to support all booking types
-export interface BookingRequest {
+export interface EnhancedBookingRequest {
   sessionId: string;
-  bookingType: "monthly" | "individual" | "subscription";
-  packageBookingId?: string;
+  bookingType: "credits" | "subscription";
+  packageBookingId?: string; // Required for credits bookings
+  subscriptionId?: string; // Required for subscription bookings
   client?: string; // Make client optional
+  brandId?: string; // Brand context
 }
 
 export interface SubscriptionPurchaseRequest {
@@ -135,28 +139,26 @@ export const useCreateBooking = () => {
 
       switch (data.bookingType) {
         case "subscription":
+          if (!data.subscriptionId) {
+            throw new Error(
+              "Subscription booking ID is required for subscription bookings"
+            );
+          }
           response = await BookingsApi.createSubscriptionBooking(
-            data.sessionId
+            data.sessionId,
+            data.subscriptionId
           );
           break;
-        case "monthly":
+        case "credits":
           if (!data.packageBookingId) {
             throw new Error(
-              "Package booking ID is required for monthly bookings"
+              "Package booking ID is required for credits bookings"
             );
           }
           response = await BookingsApi.createPackageBooking(
             data.packageBookingId,
             data.sessionId
           );
-          break;
-        case "individual":
-          response = await BookingsApi.createBooking({
-            session: data.sessionId,
-            bookingType: data.bookingType,
-            client: user?.id,
-            brandId: activeBrandId, // Include active brandId
-          });
           break;
       }
 
@@ -199,7 +201,10 @@ export const usePurchaseSubscription = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["subscriptions", activeBrandId],
+        queryKey: ["subscriptions", "active", activeBrandId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["subscriptions", "owned", activeBrandId],
       });
     },
   });
@@ -247,34 +252,35 @@ export const useCreateBookingWithBrand = () => {
       sessionId,
       bookingType,
       packageBookingId,
+      subscriptionId,
       brandId,
-    }: BookingRequest & { brandId?: string }) => {
+    }: EnhancedBookingRequest) => {
       let response;
       // Use provided brandId or fallback to active brandId
       const effectiveBrandId = brandId || activeBrandId;
 
       switch (bookingType) {
         case "subscription":
-          response = await BookingsApi.createSubscriptionBooking(sessionId);
+          if (!subscriptionId) {
+            throw new Error(
+              "Subscription booking ID is required for subscription bookings"
+            );
+          }
+          response = await BookingsApi.createSubscriptionBooking(
+            sessionId,
+            subscriptionId
+          );
           break;
-        case "monthly":
+        case "credits":
           if (!packageBookingId) {
             throw new Error(
-              "Package booking ID is required for monthly bookings"
+              "Package booking ID is required for credits bookings"
             );
           }
           response = await BookingsApi.createPackageBooking(
             packageBookingId,
             sessionId
           );
-          break;
-        case "individual":
-          response = await BookingsApi.createBooking({
-            session: sessionId,
-            bookingType: bookingType,
-            client: user?.id,
-            brandId: effectiveBrandId,
-          });
           break;
       }
 
@@ -292,6 +298,16 @@ export const useCreateBookingWithBrand = () => {
           queryKey: ["sessions", variables.brandId, variables.sessionId],
         });
       }
+    },
+  });
+};
+
+// Payment Mutations
+export const useCreatePaymentIntent = () => {
+  return useMutation({
+    mutationFn: async (data: CreatePaymentIntentRequest) => {
+      const response = await PaymentApi.createPaymentIntent(data);
+      return response.data;
     },
   });
 };

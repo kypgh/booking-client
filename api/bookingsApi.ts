@@ -10,8 +10,9 @@ interface ApiResponse<T> {
 // Define request types
 interface BookingRequest {
   session: string;
-  bookingType: "monthly" | "individual" | "subscription";
-  packageBookingId?: string;
+  bookingType: "credits" | "subscription";
+  packageBookingId?: string; // Required for credits bookings
+  subscriptionId?: string; // Required for subscription bookings
   client?: string;
   brandId?: string | null;
 }
@@ -56,13 +57,15 @@ const BookingsApi = {
     }
   },
 
-  // Create a booking with a subscription
+  // Create a booking with a subscription (updated for SubscriptionBooking)
   createSubscriptionBooking: async (
-    sessionId: string
+    sessionId: string,
+    subscriptionBookingId: string
   ): Promise<ApiResponse<BookingData>> => {
     try {
       const response = await agent.post("/booking/subscription", {
         sessionId,
+        subscriptionBookingId,
       });
       return response;
     } catch (error) {

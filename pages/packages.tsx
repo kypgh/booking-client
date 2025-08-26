@@ -1,5 +1,5 @@
 // pages/packages.tsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import BrandLayout from "@/components/layouts/BrandLayout";
 import { useBrand } from "@/contexts/BrandContext";
@@ -8,18 +8,14 @@ import {
   useSubscriptionPlans,
   useActivePackages,
   useActiveSubscriptions,
+  useRefreshPlans,
   PackageData,
   SubscriptionPlan,
 } from "@/hooks/useApi";
-import {
-  usePurchasePackage,
-  usePurchaseSubscription,
-} from "@/hooks/useMutations";
-import { toast } from "react-hot-toast";
-import { format } from "date-fns";
+import { useQueryClient } from "@tanstack/react-query";
+// Removed unused imports - using Stripe payment flow directly
 
 // Components
-import PurchaseConfirmDialog from "@/components/PurchaseConfirmDialog";
 import CurrentPlanCard from "@/components/CurrentPlanCard";
 import ModernPlanCard from "@/components/ModernPlanCard";
 import { Button } from "@/components/ui/button";
@@ -27,75 +23,64 @@ import { Badge } from "@/components/ui/badge";
 import { 
   Crown,
   Package,
-  Zap
+  Zap,
+  RefreshCw
 } from "lucide-react";
 import LoadingSpinner from "@/components/ui/loading-spinner";
+import { toast } from "react-hot-toast";
 
 export default function PlansPage() {
   const router = useRouter();
   const { activeBrandId } = useBrand();
+  const queryClient = useQueryClient();
+  const { refreshAllPlans } = useRefreshPlans();
 
-  // Purchase confirmation state
-  const [isPurchaseDialogOpen, setIsPurchaseDialogOpen] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<PackageData | SubscriptionPlan | null>(null);
-  const [selectedItemType, setSelectedItemType] = useState<"package" | "subscription">("package");
+  // State removed - using Stripe payment flow directly
 
   // Fetch data
   const { data: packages, isLoading: packagesLoading } = useAvailablePackages(activeBrandId as string);
   const { data: subscriptionPlans, isLoading: subscriptionPlansLoading } = useSubscriptionPlans(activeBrandId as string);
-  const { data: activePackages, isLoading: activePackagesLoading } = useActivePackages();
-  const { data: activeSubscriptions, isLoading: activeSubscriptionsLoading } = useActiveSubscriptions();
+  const { data: activePackages, isLoading: activePackagesLoading, refetch: refetchActivePackages } = useActivePackages();
+  const { data: activeSubscriptions, isLoading: activeSubscriptionsLoading, refetch: refetchActiveSubscriptions } = useActiveSubscriptions();
 
-  // Purchase mutations
-  const { mutate: purchasePackage, isPending: isPurchasingPackage } = usePurchasePackage();
-  const { mutate: purchaseSubscription, isPending: isPurchasingSubscription } = usePurchaseSubscription();
+  // Debug logging (temporarily disabled)
+  // console.log('Packages page data:', {
+  //   packages: packages?.length || 0,
+  //   subscriptionPlans: subscriptionPlans?.length || 0,
+  //   subscriptionPlansData: subscriptionPlans,
+  //   packagesLoading,
+  //   subscriptionPlansLoading,
+  //   activeBrandId
+  // });
 
-  // Helper functions
-  const handleOpenPurchaseDialog = (item: PackageData | SubscriptionPlan, type: "package" | "subscription") => {
-    setSelectedItem(item);
-    setSelectedItemType(type);
-    setIsPurchaseDialogOpen(true);
-  };
+  // Check if user just completed a purchase
+  useEffect(() => {
+    const justPurchased = sessionStorage.getItem('justPurchased');
+    if (justPurchased === 'true') {
+      // Clear the flag
+      sessionStorage.removeItem('justPurchased');
+      // Refetch active plans
+      refetchActivePackages();
+      refetchActiveSubscriptions();
+      toast.success('Your purchase has been processed! Your plan is now active.');
+    }
+  }, [refetchActivePackages, refetchActiveSubscriptions]);
 
-  const handleConfirmPurchase = () => {
-    if (!selectedItem || !activeBrandId) return;
-
-    if (selectedItemType === "package") {
-      purchasePackage(
-        {
-          packageId: (selectedItem as PackageData)._id,
-          paymentData: { amount: selectedItem.price, transactionId: `pkg_${Date.now()}` },
-        },
-        {
-          onSuccess: () => {
-            toast.success("Plan purchased successfully!");
-            setIsPurchaseDialogOpen(false);
-          },
-          onError: (error: any) => {
-            toast.error(error.message || "Failed to purchase plan");
-          },
-        }
-      );
-    } else {
-      purchaseSubscription(
-        {
-          planId: selectedItem.id,
-          brandId: activeBrandId,
-          paymentMethod: "credit_card",
-          transactionId: `sub_${Date.now()}`,
-        },
-        {
-          onSuccess: () => {
-            toast.success("Plan purchased successfully!");
-            setIsPurchaseDialogOpen(false);
-          },
-          onError: (error: any) => {
-            toast.error(error.message || "Failed to purchase plan");
-          },
-        }
-      );
+  // Manual refresh function
+  const handleRefresh = async () => {
+    try {
+      refreshAllPlans();
+      await Promise.all([
+        refetchActivePackages(),
+        refetchActiveSubscriptions()
+      ]);
+      toast.success('Plans refreshed successfully!');
+    } catch (error) {
+      toast.error('Failed to refresh plans. Please try again.');
     }
   };
+
+  // Purchase logic removed - using Stripe payment flow directly
 
   const hasActiveMemberships = () => {
     return (activePackages?.length || 0) > 0 || (activeSubscriptions?.length || 0) > 0;
@@ -117,9 +102,20 @@ export default function PlansPage() {
 
         {/* Current Active Plan */}
         <div className="space-y-4">
-          <div className="flex items-center gap-2 mb-4">
-            <Crown className="h-5 w-5 text-primary" />
-            <h2 className="text-xl font-semibold">Your Current Plan</h2>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <Crown className="h-5 w-5 text-primary" />
+              <h2 className="text-xl font-semibold">Your Current Plan</h2>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleRefresh}
+              disabled={activePackagesLoading || activeSubscriptionsLoading}
+            >
+              <RefreshCw className={`h-4 w-4 mr-2 ${(activePackagesLoading || activeSubscriptionsLoading) ? 'animate-spin' : ''}`} />
+              Refresh
+            </Button>
           </div>
           
           {hasActiveMemberships() ? (
@@ -178,8 +174,11 @@ export default function PlansPage() {
                       validityDays={pkg.validityDays}
                       popular={pkg.credits >= 20}
                       type="credit"
-                      onSelect={() => handleOpenPurchaseDialog(pkg, "package")}
-                      isLoading={isPurchasingPackage && selectedItem?._id === pkg._id}
+                      itemId={pkg._id}
+                      onSuccess={() => {
+                        // Query invalidation is now handled in the payment success page
+                        // No need to reload the page
+                      }}
                     />
                   ))}
                 </div>
@@ -198,7 +197,7 @@ export default function PlansPage() {
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                   {subscriptionPlans.map((plan) => (
                     <ModernPlanCard
-                      key={plan.id}
+                      key={plan._id || plan.id}
                       title={plan.name}
                       description={plan.description}
                       price={plan.price}
@@ -206,8 +205,11 @@ export default function PlansPage() {
                       frequencyLimit={plan.frequencyLimit}
                       popular={plan.allowAllClasses}
                       type="subscription"
-                      onSelect={() => handleOpenPurchaseDialog(plan, "subscription")}
-                      isLoading={isPurchasingSubscription && selectedItem?.id === plan.id}
+                      itemId={plan._id || plan.id}
+                      onSuccess={() => {
+                        // Query invalidation is now handled in the payment success page
+                        // No need to reload the page
+                      }}
                     />
                   ))}
                 </div>
@@ -219,17 +221,7 @@ export default function PlansPage() {
 
       </div>
 
-      {/* Purchase Dialog */}
-      {selectedItem && (
-        <PurchaseConfirmDialog
-          isOpen={isPurchaseDialogOpen}
-          onClose={() => setIsPurchaseDialogOpen(false)}
-          onConfirm={handleConfirmPurchase}
-          isLoading={isPurchasingPackage || isPurchasingSubscription}
-          item={selectedItem}
-          itemType={selectedItemType}
-        />
-      )}
+      {/* Purchase dialog removed - using Stripe payment flow */}
     </BrandLayout>
   );
 }

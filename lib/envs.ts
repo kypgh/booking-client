@@ -1,4 +1,5 @@
 const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME;
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
+const STRIPE_PUBLISHABLE_KEY = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
 
-export { APP_NAME, API_URL };
+export { APP_NAME, API_URL, STRIPE_PUBLISHABLE_KEY };

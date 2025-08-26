@@ -4,6 +4,7 @@ import { Star, Check, Package, Calendar, Zap, Clock } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import PaymentButton from "@/components/stripe/PaymentButton";
 
 interface ModernPlanCardProps {
   title: string;
@@ -20,8 +21,11 @@ interface ModernPlanCardProps {
   };
   popular?: boolean;
   type: "credit" | "subscription";
-  onSelect: () => void;
+  onSelect?: () => void; // Made optional for backward compatibility
   isLoading?: boolean;
+  // For Stripe integration
+  itemId?: string;
+  onSuccess?: () => void;
 }
 
 export default function ModernPlanCard({
@@ -36,6 +40,8 @@ export default function ModernPlanCard({
   type,
   onSelect,
   isLoading,
+  itemId,
+  onSuccess,
 }: ModernPlanCardProps) {
   const features = type === "credit" 
     ? [
@@ -126,22 +132,37 @@ export default function ModernPlanCard({
           </div>
 
           {/* CTA Button */}
-          <Button 
-            onClick={onSelect} 
-            className="w-full" 
-            size="lg"
-            disabled={isLoading}
-            variant={popular ? "default" : "outline"}
-          >
-            {isLoading ? (
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                Processing...
-              </div>
-            ) : (
-              `Choose ${type === "credit" ? "Credits" : "Plan"}`
-            )}
-          </Button>
+          {itemId ? (
+            <PaymentButton
+              itemType={type === "credit" ? "package" : "subscription"}
+              itemId={itemId}
+              itemName={title}
+              itemPrice={price}
+              onSuccess={onSuccess}
+              variant={popular ? "default" : "outline"}
+              size="lg"
+              className="w-full"
+            >
+              {type === "credit" ? "Purchase Credits" : "Subscribe Now"}
+            </PaymentButton>
+          ) : (
+            <Button 
+              onClick={onSelect} 
+              className="w-full" 
+              size="lg"
+              disabled={isLoading}
+              variant={popular ? "default" : "outline"}
+            >
+              {isLoading ? (
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                  Processing...
+                </div>
+              ) : (
+                `Choose ${type === "credit" ? "Credits" : "Plan"}`
+              )}
+            </Button>
+          )}
         </div>
       </CardContent>
     </Card>

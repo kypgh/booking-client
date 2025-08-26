@@ -1,7 +1,8 @@
-import { useQuery, UseQueryOptions } from "@tanstack/react-query";
+import { useQuery, UseQueryOptions, useQueryClient } from "@tanstack/react-query";
 import ClassesApi from "@/api/classesApi";
 import BookingsApi from "@/api/bookingsApi";
 import PackagesApi from "@/api/packagesApi";
+import SubscriptionPlanApi from "@/api/subscriptionPlanApi";
 import { useAuth } from "@/contexts/AuthContext";
 import InvitationApi, { InvitationData } from "@/api/invitationApi";
 import SessionsApi, { SessionDetail } from "@/api/sessionsApi";
@@ -88,22 +89,61 @@ export interface BookingData {
 
 export interface SubscriptionPlan {
   _id: string;
-  id: string;
   name: string;
   description?: string;
+  brand: string;
   price: number;
-  frequencyLimit?: {
+  status: "active" | "inactive";
+  durationDays: number;
+  frequencyLimit: {
     count: number;
     period: "day" | "week" | "month";
   };
   allowAllClasses: boolean;
+  restrictions?: {
+    classes: string[];
+  };
   includedClasses: Array<{
     id: string;
     name: string;
     description?: string;
   }>;
-  durationDays: number;
-  isActive: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface SubscriptionBooking {
+  _id: string;
+  client: string;
+  subscriptionPlan: SubscriptionPlan | string;
+  brand: string;
+  startDate: string;
+  endDate: string;
+  status: "active" | "expired" | "cancelled";
+  payment: {
+    amount: number;
+    transactionId?: string;
+    status: string;
+    date: string;
+  };
+  frequencyTracking: {
+    [period: string]: {
+      count: number;
+      resetDate: string;
+    };
+  };
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface Subscription {
+  _id: string;
+  client: string;
+  subscriptionPlan: SubscriptionPlan | string;
+  brand: string;
+  status: "active" | "expired" | "cancelled";
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 // Helper function to check authentication
@@ -281,6 +321,7 @@ export const usePackageBookings = (packageBookingId: string) => {
   });
 };
 
+// Hook to get all subscriptions (using old API until server is updated)
 export const useSubscriptions = () => {
   const authCheck = useAuthCheck();
   const { activeBrandId } = useBrand();
@@ -351,13 +392,14 @@ export const useAvailablePackages = (brandId: string) => {
   });
 };
 
-// Hook to get subscription plans for a brand
+// Hook to get subscription plans for a brand (temporarily using old API until server is updated)
 export const useSubscriptionPlans = (brandId: string) => {
   const authCheck = useAuthCheck();
 
   return useQuery({
-    queryKey: ["subscriptions", "plans", brandId],
+    queryKey: ["subscriptionPlans", brandId],
     queryFn: async () => {
+      // Temporarily use old endpoint until server is updated with new structure
       const response = await PackagesApi.getSubscriptionPlans(brandId);
       return response.data as SubscriptionPlan[];
     },
@@ -461,6 +503,7 @@ export const useSubscriptionOwnership = (planId: string) => {
   return useQuery({
     queryKey: ["subscriptions", "ownership", planId],
     queryFn: async () => {
+      // Temporarily use old endpoint until server is updated
       const response = await PackagesApi.checkSubscriptionOwnership(planId);
       return response.data.hasActivePlan;
     },
@@ -468,7 +511,7 @@ export const useSubscriptionOwnership = (planId: string) => {
   });
 };
 
-// Update to hooks/useApi.ts
+// Hook to get owned subscription plan IDs (temporarily using old API until server is updated)
 export const useOwnedSubscriptions = () => {
   const authCheck = useAuthCheck();
   const { activeBrandId } = useBrand();
@@ -488,7 +531,7 @@ export const useOwnedSubscriptions = () => {
           return [];
         }
 
-        // Extract plan IDs from active subscriptions
+        // Extract plan IDs from active subscriptions (old format)
         const planIds = response.data
           .filter((sub: any) => sub.status === "active")
           .map((sub: any) => {
@@ -510,16 +553,55 @@ export const useOwnedSubscriptions = () => {
   });
 };
 
+// Hook to get active subscription bookings (temporarily using old API until server is updated)
 export const useActiveSubscriptions = () => {
   const authCheck = useAuthCheck();
   const { activeBrandId } = useBrand();
 
   return useQuery({
-    queryKey: ["subscriptions", "active", activeBrandId],
+    queryKey: ["subscriptionBookings", "active", activeBrandId],
     queryFn: async () => {
+      // Temporarily use old endpoint until server is updated with new structure
       const response = await PackagesApi.getSubscriptions();
       return response.data.filter((sub: any) => sub.status === "active");
     },
     ...authCheck,
   });
+};
+
+// Hook to get subscription booking history
+export const useSubscriptionBookingHistory = () => {
+  const authCheck = useAuthCheck();
+  const { activeBrandId } = useBrand();
+
+  return useQuery({
+    queryKey: ["subscriptionBookings", "history", activeBrandId],
+    queryFn: async () => {
+      const response = await SubscriptionPlanApi.getSubscriptionBookingHistory();
+      return response.data;
+    },
+    ...authCheck,
+  });
+};
+
+// Custom hook to refresh all plan-related data
+export const useRefreshPlans = () => {
+  const queryClient = useQueryClient();
+  const { activeBrandId } = useBrand();
+
+  const refreshAllPlans = () => {
+    // Invalidate all plan-related queries
+    queryClient.invalidateQueries({ queryKey: ["packages", "active", activeBrandId] });
+    queryClient.invalidateQueries({ queryKey: ["subscriptions", "active", activeBrandId] });
+    queryClient.invalidateQueries({ queryKey: ["subscriptionBookings", "active", activeBrandId] });
+    queryClient.invalidateQueries({ queryKey: ["packages", "owned"] });
+    queryClient.invalidateQueries({ queryKey: ["subscriptions", "owned", activeBrandId] });
+    queryClient.invalidateQueries({ queryKey: ["subscriptionPlans", activeBrandId] });
+    
+    // Also invalidate ownership queries for all packages and subscriptions
+    queryClient.invalidateQueries({ queryKey: ["packages", "ownership"] });
+    queryClient.invalidateQueries({ queryKey: ["subscriptions", "ownership"] });
+  };
+
+  return { refreshAllPlans };
 };
