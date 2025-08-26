@@ -1,5 +1,5 @@
 // pages/classes/[id].tsx
-import React from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/router";
 import { Calendar, Clock, Users, AlertCircle } from "lucide-react";
 import BrandLayout from "@/components/layouts/BrandLayout";
@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { format, parseISO, isAfter } from "date-fns";
+import BookSessionDialog from "@/components/BookSessionDialog";
 
 const today = new Date();
 const inTwoWeeks = new Date();
@@ -19,6 +20,8 @@ export default function ClassDetailsPage() {
   const router = useRouter();
   const { id } = router.query;
   const { activeBrandId } = useBrand();
+  const [isBookDialogOpen, setIsBookDialogOpen] = useState(false);
+  const [selectedSession, setSelectedSession] = useState<any>(null);
 
   // Get class details with the id from the URL
   const { data: classData, isLoading, error } = useClassDetails(id as string);
@@ -76,6 +79,21 @@ export default function ClassDetailsPage() {
 
   const handleGoBack = () => {
     router.push(`/classes`);
+  };
+
+  const handleSessionClick = (session: any) => {
+    router.push(`/session/${session._id}`);
+  };
+
+  const handleBookSession = (session: any, event: React.MouseEvent) => {
+    event.stopPropagation(); // Prevent row click
+    setSelectedSession(session);
+    setIsBookDialogOpen(true);
+  };
+
+  const handleCloseBookDialog = () => {
+    setIsBookDialogOpen(false);
+    setSelectedSession(null);
   };
 
   return (
@@ -211,8 +229,6 @@ export default function ClassDetailsPage() {
             </Card>
           )}
 
-
-
           {/* Upcoming Sessions */}
           <div className="mt-6">
             <h2 className="text-lg font-medium mb-3">Upcoming Sessions</h2>
@@ -233,7 +249,8 @@ export default function ClassDetailsPage() {
                       key={session._id}
                       className={`${
                         !isFuture || !isAvailable ? "opacity-60" : ""
-                      }`}
+                      } cursor-pointer hover:shadow-md transition-shadow`}
+                      onClick={() => handleSessionClick(session)}
                     >
                       <CardContent className="p-3">
                         <div className="flex justify-between">
@@ -257,9 +274,7 @@ export default function ClassDetailsPage() {
                                 size="sm"
                                 className="mt-2"
                                 disabled={!isAvailable}
-                                onClick={() =>
-                                  router.push(`/book/${session._id}`)
-                                }
+                                onClick={(e) => handleBookSession(session, e)}
                               >
                                 {isAvailable ? "Book" : "Full"}
                               </Button>
@@ -279,6 +294,24 @@ export default function ClassDetailsPage() {
           </div>
         </div>
       ) : null}
+
+      {/* Booking Dialog */}
+      {selectedSession && (
+        <BookSessionDialog
+          isOpen={isBookDialogOpen}
+          onClose={handleCloseBookDialog}
+          session={{
+            id: selectedSession._id,
+            dateTime: selectedSession.dateTime,
+            duration: selectedSession.duration,
+            class: {
+              id: selectedSession.class._id,
+              name: selectedSession.class.name,
+            },
+          }}
+          brandId={activeBrandId as string}
+        />
+      )}
     </BrandLayout>
   );
 }
