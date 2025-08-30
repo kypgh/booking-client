@@ -6,6 +6,18 @@ export const getErrorMessage = (error: any): string => {
   }
   
   if (error && typeof error === 'object') {
+    // Handle the new server error structure (success: false, error: {code, message})
+    if (error.data && error.data.error && typeof error.data.error === 'object') {
+      const errorObj = error.data.error;
+      if (errorObj.message && typeof errorObj.message === 'string') {
+        return errorObj.message;
+      }
+      if (errorObj.code && typeof errorObj.code === 'string') {
+        const message = errorObj.message || 'An error occurred';
+        return `Error ${errorObj.code}: ${message}`;
+      }
+    }
+    
     // Handle common error structures
     if (error.message && typeof error.message === 'string') {
       return error.message;

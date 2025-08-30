@@ -52,6 +52,23 @@ interface EnhancedError {
 // Add a response interceptor to handle common errors
 axiosInstance.interceptors.response.use(
   (response: AxiosResponse) => {
+    // Check if the response indicates an error (success: false)
+    if (response.data && response.data.success === false) {
+      // Extract error information from the response
+      const errorData = response.data.error || {};
+      const errorMessage = errorData.message || "An error occurred";
+      
+      // Create an enhanced error object
+      const enhancedError: EnhancedError = {
+        message: errorMessage,
+        status: response.status,
+        data: response.data,
+        originalError: new Error(errorMessage),
+      };
+
+      return Promise.reject(enhancedError);
+    }
+
     // Return the response data directly for easier use
     return response.data;
   },

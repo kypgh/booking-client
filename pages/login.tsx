@@ -7,6 +7,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { useBrand, Brand } from "@/contexts/BrandContext";
+import { getErrorMessage } from "@/lib/errorUtils";
 
 // UI Components
 import { Button } from "@/components/ui/button";
@@ -83,7 +84,7 @@ export default function LoginPage() {
       }
     } catch (error: any) {
       console.error("Login error:", error);
-      toast.error(error.message || "Failed to login. Please try again.");
+      toast.error(getErrorMessage(error) || "Failed to login. Please try again.");
     } finally {
       setIsLoading(false);
     }

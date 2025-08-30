@@ -7,7 +7,7 @@ import {
 import { Button } from '@/components/ui/button';
 import LoadingSpinner from '@/components/ui/loading-spinner';
 import { CreditCard, CheckCircle } from 'lucide-react';
-import { ensureNumber, ensureString } from '@/lib/errorUtils';
+import { getErrorMessage, ensureNumber, ensureString } from '@/lib/errorUtils';
 
 interface CheckoutFormProps {
   onSuccess?: () => void;
@@ -49,14 +49,14 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({
       });
 
       if (error) {
-        setPaymentError(error.message || 'An error occurred during payment');
-        onError?.(error.message || 'Payment failed');
+        setPaymentError(getErrorMessage(error) || 'An error occurred during payment');
+        onError?.(getErrorMessage(error) || 'Payment failed');
       } else {
         // Payment succeeded
         onSuccess?.();
       }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Payment failed';
+      const errorMessage = getErrorMessage(err) || 'Payment failed';
       setPaymentError(errorMessage);
       onError?.(errorMessage);
     } finally {

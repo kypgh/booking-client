@@ -161,15 +161,12 @@ export const useClassList = (businessType?: "fixed" | "hourly") => {
     queryKey: ["classes", { businessType, brandId: activeBrandId }],
     queryFn: async () => {
       const response = await ClassesApi.getAllClasses(
-        businessType,
-        undefined,
+        undefined, // Don't pass businessType since server doesn't support it
+        "active",  // Explicitly pass status
         activeBrandId || undefined
       );
-      // Filter to only show active classes
-      const activeClasses = response.data.filter(
-        (classItem: ClassData) => classItem.status === "active"
-      );
-      return activeClasses as ClassData[];
+      // No need to filter since we're already requesting active classes
+      return response.data as ClassData[];
     },
     ...authCheck,
     enabled: !!activeBrandId && authCheck.enabled, // Only run when we have a brandId

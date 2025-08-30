@@ -57,15 +57,15 @@ const BookingsApi = {
     }
   },
 
-  // Create a booking with a subscription (updated for SubscriptionBooking)
+  // Create a booking with a subscription (updated for Subscription)
   createSubscriptionBooking: async (
     sessionId: string,
-    subscriptionBookingId: string
+    subscriptionId: string
   ): Promise<ApiResponse<BookingData>> => {
     try {
       const response = await agent.post("/booking/subscription", {
         sessionId,
-        subscriptionBookingId,
+        subscriptionId,
       });
       return response;
     } catch (error) {

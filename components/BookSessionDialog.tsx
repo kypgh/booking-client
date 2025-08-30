@@ -4,6 +4,7 @@ import { format } from "date-fns";
 import { useAuth } from "@/contexts/AuthContext";
 import { useActivePackages, useSubscriptions, useAvailablePackages, useSubscriptionPlans } from "@/hooks/useApi";
 import { useCreateBookingWithBrand } from "@/hooks/useMutations";
+import { getErrorMessage } from "@/lib/errorUtils";
 import { toast } from "react-hot-toast";
 
 // UI Components
@@ -142,7 +143,7 @@ const BookSessionDialog: React.FC<BookSessionDialogProps> = ({
         router.push("/bookings");
       },
       onError: (error: any) => {
-        toast.error(error.message || "Failed to book session");
+        toast.error(getErrorMessage(error) || "Failed to book session");
         setIsBooking(false);
       },
     });

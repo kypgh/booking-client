@@ -11,7 +11,7 @@ interface ApiResponse<T> {
 const ClassesApi = {
   // Get all classes
   getAllClasses: async (
-    businessType?: "fixed" | "hourly",
+    businessType?: "fixed" | "hourly", // Keep parameter for backward compatibility but don't use it
     status: string = "active", // Default to active classes
     brandId?: string // Optional brandId parameter
   ): Promise<ApiResponse<ClassData[]>> => {
@@ -19,10 +19,10 @@ const ClassesApi = {
       const brandIdParam = brandId;
       let url = `/class?brandId=${brandIdParam}`;
 
-      // Add businessType as a query parameter if provided
-      if (businessType) {
-        url += `&businessType=${businessType}`;
-      }
+      // Note: businessType parameter removed since server doesn't support it
+      // if (businessType) {
+      //   url += `&businessType=${businessType}`;
+      // }
 
       // Add status filter
       url += `&status=${status}`;

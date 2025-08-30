@@ -9,6 +9,8 @@ import {
   useActivePackages,
   useActiveSubscriptions,
   useRefreshPlans,
+  useOwnedPackages,
+  useSubscriptionOwnership,
   PackageData,
   SubscriptionPlan,
 } from "@/hooks/useApi";
@@ -42,16 +44,7 @@ export default function PlansPage() {
   const { data: subscriptionPlans, isLoading: subscriptionPlansLoading } = useSubscriptionPlans(activeBrandId as string);
   const { data: activePackages, isLoading: activePackagesLoading, refetch: refetchActivePackages } = useActivePackages();
   const { data: activeSubscriptions, isLoading: activeSubscriptionsLoading, refetch: refetchActiveSubscriptions } = useActiveSubscriptions();
-
-  // Debug logging (temporarily disabled)
-  // console.log('Packages page data:', {
-  //   packages: packages?.length || 0,
-  //   subscriptionPlans: subscriptionPlans?.length || 0,
-  //   subscriptionPlansData: subscriptionPlans,
-  //   packagesLoading,
-  //   subscriptionPlansLoading,
-  //   activeBrandId
-  // });
+  const { data: ownedPackageIds } = useOwnedPackages();
 
   // Check if user just completed a purchase
   useEffect(() => {
@@ -125,7 +118,6 @@ export default function PlansPage() {
                 <CurrentPlanCard 
                   plan={activePackages[0]} 
                   type="package" 
-                  onManage={() => router.push(`/packages/${activePackages[0]._id}`)}
                 />
               )}
               
@@ -133,7 +125,6 @@ export default function PlansPage() {
                 <CurrentPlanCard 
                   plan={activeSubscriptions[0]} 
                   type="subscription" 
-                  onManage={() => router.push(`/subscriptions/${activeSubscriptions[0]._id}`)}
                 />
               )}
             </>
@@ -163,7 +154,7 @@ export default function PlansPage() {
                   <Badge variant="secondary" className="text-xs">Pay per use</Badge>
                 </div>
                 
-                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 items-stretch">
                   {packages.map((pkg) => (
                     <ModernPlanCard
                       key={pkg._id}
@@ -175,6 +166,8 @@ export default function PlansPage() {
                       popular={pkg.credits >= 20}
                       type="credit"
                       itemId={pkg._id}
+                      isOwned={ownedPackageIds?.includes(pkg._id) || false}
+                      cancellationPolicyHours={24} // Default to 24 hours, should be fetched from backend
                       onSuccess={() => {
                         // Query invalidation is now handled in the payment success page
                         // No need to reload the page
@@ -185,33 +178,39 @@ export default function PlansPage() {
               </div>
             )}
 
-            {/* Monthly Plans */}
+            {/* Subscription Plans */}
             {subscriptionPlans && subscriptionPlans.length > 0 && (
               <div className="space-y-6 mt-12">
                 <div className="flex items-center gap-2">
                   <Zap className="h-5 w-5 text-primary" />
-                  <h3 className="text-lg font-semibold">Monthly Plans</h3>
-                  <Badge variant="secondary" className="text-xs">Unlimited access</Badge>
+                  <h3 className="text-lg font-semibold">Subscription Plans</h3>
                 </div>
                 
-                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                  {subscriptionPlans.map((plan) => (
-                    <ModernPlanCard
-                      key={plan._id || plan.id}
-                      title={plan.name}
-                      description={plan.description}
-                      price={plan.price}
-                      allowAllClasses={plan.allowAllClasses}
-                      frequencyLimit={plan.frequencyLimit}
-                      popular={plan.allowAllClasses}
-                      type="subscription"
-                      itemId={plan._id || plan.id}
-                      onSuccess={() => {
-                        // Query invalidation is now handled in the payment success page
-                        // No need to reload the page
-                      }}
-                    />
-                  ))}
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 items-stretch">
+                  {subscriptionPlans.map((plan) => {
+                    // Check if user owns this subscription plan by comparing subscriptionPlan._id
+                    const isOwned = activeSubscriptions?.some(sub => (sub as any).subscriptionPlan?._id === plan._id) || false;
+                    return (
+                      <ModernPlanCard
+                        key={plan._id}
+                        title={plan.name}
+                        description={plan.description}
+                        price={plan.price}
+                        allowAllClasses={plan.allowAllClasses}
+                        frequencyLimit={plan.frequencyLimit}
+                        includedClasses={plan.includedClasses}
+                        popular={false}
+                        type="subscription"
+                        itemId={plan._id}
+                        isOwned={isOwned}
+                        cancellationPolicyHours={24} // Default to 24 hours, should be fetched from backend
+                        onSuccess={() => {
+                          // Query invalidation is now handled in the payment success page
+                          // No need to reload the page
+                        }}
+                      />
+                    );
+                  })}
                 </div>
               </div>
             )}

@@ -6,14 +6,33 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { useClassList } from "@/hooks/useApi";
 
 interface CurrentPlanCardProps {
   plan: any;
   type: "package" | "subscription";
-  onManage: () => void;
+  onManage?: () => void;
 }
 
 export default function CurrentPlanCard({ plan, type, onManage }: CurrentPlanCardProps) {
+  // Fetch all classes to resolve class IDs to names
+  const { data: allClasses } = useClassList();
+
+  // Helper function to get class name by ID
+  const getClassNameById = (classId: string) => {
+    if (!allClasses) {
+      return `Loading...`;
+    }
+    
+    const classData = allClasses.find(cls => cls._id === classId);
+    if (!classData) {
+      // Class not found - likely deleted or inactive
+      return `Class (Unavailable)`;
+    }
+    
+    return classData.name;
+  };
+
   const formatDate = (date: string | null | undefined) => {
     if (!date) return "Not set";
     
@@ -62,16 +81,16 @@ export default function CurrentPlanCard({ plan, type, onManage }: CurrentPlanCar
                 Active Plan
               </Badge>
               <Badge variant="outline" className="text-xs">
-                {type === "package" ? "Credit Plan" : "Monthly Plan"}
+                {type === "package" ? "Credit Plan" : "Subscription Plan"}
               </Badge>
             </div>
             
             <h3 className="text-xl font-bold">
-              {type === "package" ? plan.package?.name : plan.plan?.name}
+              {type === "package" ? plan.package?.name : plan.subscriptionPlan?.name}
             </h3>
             
             <p className="text-muted-foreground text-sm">
-              {type === "package" ? plan.package?.description : plan.plan?.description}
+              {type === "package" ? plan.package?.description : plan.subscriptionPlan?.description}
             </p>
           </div>
 
@@ -110,7 +129,7 @@ export default function CurrentPlanCard({ plan, type, onManage }: CurrentPlanCar
                     <CreditCard className="h-4 w-4" />
                     <span>Purchased</span>
                   </div>
-                  <p className="text-sm font-medium">{formatDate(plan.purchaseDate)}</p>
+                  <p className="text-sm font-medium">{formatDate(plan.purchaseDate || plan.createdAt)}</p>
                 </div>
               </div>
             </div>
@@ -123,9 +142,30 @@ export default function CurrentPlanCard({ plan, type, onManage }: CurrentPlanCar
                     <Users className="h-4 w-4" />
                     <span>Access level</span>
                   </div>
-                  <p className="text-sm font-medium">
-                    {plan.plan?.allowAllClasses ? "All Classes" : "Selected Classes"}
-                  </p>
+                  <div className="text-sm font-medium">
+                    {plan.subscriptionPlan?.allowAllClasses ? (
+                      "All Classes"
+                    ) : (
+                      <div className="space-y-1">
+                        <div>Selected Classes</div>
+                        {plan.subscriptionPlan?.includedClasses && 
+                         Array.isArray(plan.subscriptionPlan.includedClasses) && 
+                         plan.subscriptionPlan.includedClasses.length > 0 ? (
+                          <div className="text-xs text-muted-foreground">
+                            {plan.subscriptionPlan.includedClasses.map((classId, index) => (
+                              <div key={classId || index}>
+                                • {getClassNameById(classId)}
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="text-xs text-muted-foreground">
+                            No specific classes defined
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
                 
                 <div className="space-y-1">
@@ -134,11 +174,30 @@ export default function CurrentPlanCard({ plan, type, onManage }: CurrentPlanCar
                     <span>Usage limit</span>
                   </div>
                   <p className="text-sm font-medium">
-                    {plan.plan?.frequencyLimit 
-                      ? `${plan.plan.frequencyLimit.count}/${plan.plan.frequencyLimit.period}` 
+                    {plan.subscriptionPlan?.frequencyLimit 
+                      ? `${plan.subscriptionPlan.frequencyLimit.count}/${plan.subscriptionPlan.frequencyLimit.period}` 
                       : "Unlimited"
                     }
                   </p>
+                </div>
+              </div>
+
+              {/* Subscription validity and billing info */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Calendar className="h-4 w-4" />
+                    <span>Valid until</span>
+                  </div>
+                  <p className="text-sm font-medium">{formatDate(plan.endDate)}</p>
+                </div>
+                
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <CreditCard className="h-4 w-4" />
+                    <span>Started</span>
+                  </div>
+                  <p className="text-sm font-medium">{formatDate(plan.startDate)}</p>
                 </div>
               </div>
 
@@ -154,15 +213,17 @@ export default function CurrentPlanCard({ plan, type, onManage }: CurrentPlanCar
             </div>
           )}
 
-          {/* Action button */}
-          <Button 
-            onClick={onManage} 
-            className="w-full"
-            variant="outline"
-          >
-            <Settings className="h-4 w-4 mr-2" />
-            Manage Plan
-          </Button>
+          {/* Action button - only show if onManage is provided */}
+          {onManage && (
+            <Button 
+              onClick={onManage} 
+              className="w-full"
+              variant="outline"
+            >
+              <Settings className="h-4 w-4 mr-2" />
+              Manage Plan
+            </Button>
+          )}
         </div>
       </CardContent>
     </Card>

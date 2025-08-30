@@ -19,6 +19,11 @@ interface ModernPlanCardProps {
     count: number;
     period: "day" | "week" | "month";
   };
+  includedClasses?: Array<{
+    id: string;
+    name: string;
+    description?: string;
+  }>;
   popular?: boolean;
   type: "credit" | "subscription";
   onSelect?: () => void; // Made optional for backward compatibility
@@ -26,6 +31,9 @@ interface ModernPlanCardProps {
   // For Stripe integration
   itemId?: string;
   onSuccess?: () => void;
+  // For ownership and cancellation policy
+  isOwned?: boolean;
+  cancellationPolicyHours?: number;
 }
 
 export default function ModernPlanCard({
@@ -36,27 +44,27 @@ export default function ModernPlanCard({
   validityDays,
   allowAllClasses,
   frequencyLimit,
+  includedClasses,
   popular,
   type,
   onSelect,
   isLoading,
   itemId,
   onSuccess,
+  isOwned = false,
+  cancellationPolicyHours = 24,
 }: ModernPlanCardProps) {
   const features = type === "credit" 
     ? [
         { icon: Package, text: `${credits} credits included`, highlight: true },
         { icon: Calendar, text: `Valid for ${validityDays} days` },
         { icon: Check, text: "Book any available class" },
-        { icon: Check, text: "Cancel up to 2 hours before" },
-        ...(credits && credits >= 20 ? [{ icon: Star, text: "Priority booking support" }] : []),
+        { icon: Check, text: `Cancel up to ${cancellationPolicyHours} hours before` },
       ]
     : [
-        { icon: allowAllClasses ? Zap : Package, text: allowAllClasses ? "All classes included" : "Selected classes", highlight: true },
-        { icon: Calendar, text: "Monthly billing cycle" },
-        ...(frequencyLimit ? [{ icon: Clock, text: `Up to ${frequencyLimit.count} classes per ${frequencyLimit.period}` }] : [{ icon: Zap, text: "Unlimited class bookings" }]),
-        { icon: Check, text: "Cancel up to 2 hours before" },
-        { icon: Star, text: "Priority customer support" },
+        { icon: allowAllClasses ? Zap : Package, text: allowAllClasses ? "All classes included" : (includedClasses && includedClasses.length > 0 ? `Classes: ${includedClasses.map(c => c.name).join(', ')}` : "Selected classes"), highlight: true },
+        ...(frequencyLimit ? [{ icon: Clock, text: `Up to ${frequencyLimit.count} classes per ${frequencyLimit.period}` }] : []),
+        { icon: Check, text: `Cancel up to ${cancellationPolicyHours} hours before` },
       ];
 
   return (
@@ -82,12 +90,6 @@ export default function ModernPlanCard({
 
       <CardHeader className="pb-4">
         <div className="space-y-2">
-          <div className="flex items-center gap-2">
-            <Badge variant={type === "credit" ? "secondary" : "default"} className="text-xs">
-              {type === "credit" ? "Credit Plan" : "Monthly Plan"}
-            </Badge>
-          </div>
-          
           <h3 className="text-lg font-semibold">{title}</h3>
           
           {description && (
@@ -96,8 +98,8 @@ export default function ModernPlanCard({
         </div>
       </CardHeader>
 
-      <CardContent className="pt-0">
-        <div className="space-y-6">
+      <CardContent className="pt-0 flex flex-col h-full">
+        <div className="flex flex-col h-full">
           {/* Pricing */}
           <div className="space-y-1">
             <div className="flex items-baseline gap-1">
@@ -106,15 +108,10 @@ export default function ModernPlanCard({
                 <span className="text-muted-foreground text-sm">/month</span>
               )}
             </div>
-            {type === "credit" && credits && (
-              <p className="text-sm text-muted-foreground">
-                ${(price / credits).toFixed(2)} per credit
-              </p>
-            )}
           </div>
 
           {/* Features */}
-          <div className="space-y-3">
+          <div className="space-y-3 flex-1 mt-6">
             {features.map((feature, index) => (
               <div key={index} className="flex items-start gap-3">
                 <div className={`w-5 h-5 rounded-full flex items-center justify-center mt-0.5 ${
@@ -131,38 +128,49 @@ export default function ModernPlanCard({
             ))}
           </div>
 
-          {/* CTA Button */}
-          {itemId ? (
-            <PaymentButton
-              itemType={type === "credit" ? "package" : "subscription"}
-              itemId={itemId}
-              itemName={title}
-              itemPrice={price}
-              onSuccess={onSuccess}
-              variant={popular ? "default" : "outline"}
-              size="lg"
-              className="w-full"
-            >
-              {type === "credit" ? "Purchase Credits" : "Subscribe Now"}
-            </PaymentButton>
-          ) : (
-            <Button 
-              onClick={onSelect} 
-              className="w-full" 
-              size="lg"
-              disabled={isLoading}
-              variant={popular ? "default" : "outline"}
-            >
-              {isLoading ? (
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                  Processing...
-                </div>
-              ) : (
-                `Choose ${type === "credit" ? "Credits" : "Plan"}`
-              )}
-            </Button>
-          )}
+          {/* CTA Button - Always at bottom */}
+          <div className="mt-6">
+            {isOwned ? (
+              <Button 
+                className="w-full" 
+                size="lg"
+                variant="secondary"
+                disabled
+              >
+                Purchased
+              </Button>
+            ) : itemId ? (
+              <PaymentButton
+                itemType={type === "credit" ? "package" : "subscription"}
+                itemId={itemId}
+                itemName={title}
+                itemPrice={price}
+                onSuccess={onSuccess}
+                variant={popular ? "default" : "outline"}
+                size="lg"
+                className="w-full"
+              >
+                {type === "credit" ? "Purchase Credits" : "Subscribe Now"}
+              </PaymentButton>
+            ) : (
+              <Button 
+                onClick={onSelect} 
+                className="w-full" 
+                size="lg"
+                disabled={isLoading}
+                variant={popular ? "default" : "outline"}
+              >
+                {isLoading ? (
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                    Processing...
+                  </div>
+                ) : (
+                  `Choose ${type === "credit" ? "Credits" : "Plan"}`
+                )}
+              </Button>
+            )}
+          </div>
         </div>
       </CardContent>
     </Card>
