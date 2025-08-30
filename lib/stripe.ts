@@ -6,7 +6,10 @@ let stripePromise: Promise<Stripe | null>;
 const getStripe = () => {
   if (!stripePromise) {
     if (!STRIPE_PUBLISHABLE_KEY) {
-      throw new Error('Stripe publishable key is not configured');
+      console.warn('Stripe publishable key is not configured');
+      // Return a resolved promise with null for build environments
+      stripePromise = Promise.resolve(null);
+      return stripePromise;
     }
     stripePromise = loadStripe(STRIPE_PUBLISHABLE_KEY);
   }

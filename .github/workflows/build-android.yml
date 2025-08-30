@@ -35,6 +35,9 @@ jobs:
 
     - name: Build web app
       run: npm run build
+      env:
+        NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: "pk_test_dummy_key_for_build"
+        NEXT_PUBLIC_API_URL: "https://api.example.com"
 
     - name: Sync Capacitor
       run: npx cap sync android
