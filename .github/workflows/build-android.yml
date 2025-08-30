@@ -57,15 +57,15 @@ jobs:
         path: android/app/build/outputs/apk/debug/app-debug.apk
         retention-days: 30
 
-    - name: Upload APK to file.io (temporary link)
+    - name: Upload APK to 0x0.st (temporary link)
       run: |
-        echo "Uploading APK to file.io..."
-        response=$(curl -F "file=@android/app/build/outputs/apk/debug/app-debug.apk" https://file.io)
-        echo "Upload response: $response"
+        echo "Uploading APK to 0x0.st..."
+        upload_url=$(curl -F "file=@android/app/build/outputs/apk/debug/app-debug.apk" https://0x0.st)
         echo "==================================="
-        echo "DOWNLOAD LINK BELOW:"
-        echo "$response" | grep -o 'https://file.io/[^"]*' || echo "Link extraction failed, full response: $response"
+        echo "DOWNLOAD LINK:"
+        echo "$upload_url"
         echo "==================================="
+        echo "Copy this link to download your APK!"
 
     - name: Build Android AAB (for Play Store)
       run: |
