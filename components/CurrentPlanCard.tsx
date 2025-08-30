@@ -152,7 +152,7 @@ export default function CurrentPlanCard({ plan, type, onManage }: CurrentPlanCar
                          Array.isArray(plan.subscriptionPlan.includedClasses) && 
                          plan.subscriptionPlan.includedClasses.length > 0 ? (
                           <div className="text-xs text-muted-foreground">
-                            {plan.subscriptionPlan.includedClasses.map((classId, index) => (
+                            {plan.subscriptionPlan.includedClasses.map((classId: string, index: number) => (
                               <div key={classId || index}>
                                 • {getClassNameById(classId)}
                               </div>

@@ -104,7 +104,7 @@ const BookSessionDialog: React.FC<BookSessionDialogProps> = ({
     }
     
     if (bookingMethod === "subscription" && availableSubscriptions && availableSubscriptions.length > 0) {
-      setSelectedSubscription(availableSubscriptions[0]._id || availableSubscriptions[0].id);
+      setSelectedSubscription(availableSubscriptions[0].id);
     } else {
       setSelectedSubscription("");
     }
@@ -275,10 +275,10 @@ const BookSessionDialog: React.FC<BookSessionDialogProps> = ({
                   >
                     {availableSubscriptions.map((sub) => (
                       <label
-                        key={sub._id || sub.id}
+                        key={sub.id}
                         className="flex items-center space-x-2 border rounded-md p-3 cursor-pointer"
                       >
-                        <RadioGroupItem value={sub._id || sub.id} id={sub._id || sub.id} />
+                        <RadioGroupItem value={sub.id} id={sub.id} />
                         <div>
                           <span className="font-medium">{sub.name}</span>
                           <div className="text-sm text-muted-foreground">
@@ -351,7 +351,7 @@ const BookSessionDialog: React.FC<BookSessionDialogProps> = ({
                     <h4 className="font-medium text-sm text-muted-foreground">Monthly Plans</h4>
                     <div className="grid gap-3">
                       {subscriptionPlans.slice(0, 2).map((plan) => (
-                        <Card key={plan.id} className="p-3">
+                        <Card key={plan._id} className="p-3">
                           <div className="flex items-center justify-between mb-3">
                             <div>
                               <h5 className="font-medium">{plan.name}</h5>
@@ -365,7 +365,7 @@ const BookSessionDialog: React.FC<BookSessionDialogProps> = ({
                           </div>
                           <PaymentButton
                             itemType="subscription"
-                            itemId={plan.id}
+                            itemId={plan._id}
                             itemName={plan.name}
                             itemPrice={plan.price}
                             onSuccess={() => {

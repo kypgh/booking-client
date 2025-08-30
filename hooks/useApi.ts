@@ -81,6 +81,10 @@ export interface BookingData {
     capacity: number;
     availableSpots: number;
     status: string;
+    class?: {
+      id: string;
+      name: string;
+    };
   };
   status: string;
   bookingType: string;
@@ -398,7 +402,29 @@ export const useSubscriptionPlans = (brandId: string) => {
     queryFn: async () => {
       // Temporarily use old endpoint until server is updated with new structure
       const response = await PackagesApi.getSubscriptionPlans(brandId);
-      return response.data as SubscriptionPlan[];
+      // Transform SubscriptionData[] to SubscriptionPlan[] format
+      return response.data.map((sub: any) => ({
+        _id: sub.id, // Map id to _id
+        name: sub.name,
+        description: sub.description,
+        brand: sub.brand || brandId,
+        price: sub.price,
+        status: "active" as const,
+        durationDays: 30, // Default for monthly plans
+        frequencyLimit: {
+          count: sub.includedClasses?.length || 999,
+          period: "month" as const
+        },
+        allowAllClasses: sub.includedClasses?.length === 0 || !sub.includedClasses,
+        includedClasses: (sub.includedClasses || []).map((cls: any) => ({
+          id: cls.id || cls,
+          name: cls.name || `Class ${cls.id || cls}`,
+          description: cls.description
+        })), // Add includedClasses property
+        restrictions: sub.includedClasses?.length > 0 ? {
+          classes: sub.includedClasses.map((cls: any) => cls.id || cls)
+        } : undefined
+      }));
     },
     enabled: !!brandId && authCheck.enabled,
   });
