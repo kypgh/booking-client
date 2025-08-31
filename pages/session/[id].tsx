@@ -5,14 +5,16 @@ import { format, parseISO, isAfter, addMinutes } from "date-fns";
 import { Calendar, Clock, Users, Info, AlertCircle, Check } from "lucide-react";
 import BrandLayout from "@/components/layouts/BrandLayout";
 import { useSessionDetailsByBrand } from "@/hooks/useApi";
+import { useAutoRefresh, REFRESH_CONFIGS } from "@/hooks/useAutoRefresh";
+
 import { useBrand } from "@/contexts/BrandContext";
+import { useAuth } from "@/contexts/AuthContext";
 
 // UI Components
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import BookSessionDialog from "@/components/BookSessionDialog";
-import { useAuth } from "@/contexts/AuthContext";
 import { useSessionBookingStatus } from "@/hooks/useSessionBookingStatus";
 
 export default function SessionDetailPage() {
@@ -30,6 +32,17 @@ export default function SessionDetailPage() {
   } = useSessionDetailsByBrand(id as string, activeBrandId as string);
 
   const { isSessionBooked } = useSessionBookingStatus();
+
+  // Auto-refresh session data (especially for capacity changes)
+  const { refresh: refreshSessionData } = useAutoRefresh({
+    interval: 20000, // 20 seconds for session details
+    queryKeys: [
+      ['sessions', activeBrandId || '{brandId}', id as string],
+      ['bookings', 'active', activeBrandId || '{brandId}'],
+    ],
+    enabled: !!id && !!activeBrandId,
+  });
+
 
   // Format time function
   const formatTime = (dateString: string) => {

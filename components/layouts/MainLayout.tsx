@@ -40,14 +40,24 @@ export default function MainLayout({
         <meta name="description" content={description} />
         <meta
           name="viewport"
-          content="width=device-width, initial-scale=1, maximum-scale=1"
+          content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover"
         />
       </Head>
 
-      <div className="min-h-screen bg-background">
+      <div 
+        className="min-h-screen bg-background"
+        style={{
+          paddingTop: 'env(safe-area-inset-top)',
+          paddingLeft: 'env(safe-area-inset-left)',
+          paddingRight: 'env(safe-area-inset-right)'
+        }}
+      >
         {/* Page Header */}
         {(showBackButton || headerTitle) && (
-          <header className="sticky top-0 z-10 bg-background/80 backdrop-blur-sm border-b border-border">
+          <header 
+            className="sticky-header bg-background/80 backdrop-blur-sm border-b border-border"
+            style={{ top: 'env(safe-area-inset-top, 0px)' }}
+          >
             <div className="flex items-center h-14 px-4">
               {showBackButton && (
                 <button
@@ -66,6 +76,11 @@ export default function MainLayout({
 
         <main
           className={`px-4 py-5 ${padBottom && showNavigation ? "pb-24" : ""}`}
+          style={{
+            paddingBottom: padBottom && showNavigation 
+              ? `calc(6rem + env(safe-area-inset-bottom))` 
+              : undefined
+          }}
         >
           {loading ? (
             <div className="flex justify-center items-center min-h-[50vh]">

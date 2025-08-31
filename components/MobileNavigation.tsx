@@ -18,7 +18,7 @@ export default function MobileNavigation() {
     if (path === currentPath) return true;
 
     // Handle special cases
-    if (path === "/packages" && currentPath.startsWith("/packages"))
+    if (path === "/plans" && currentPath.startsWith("/plans"))
       return true;
     if (path === "/bookings" && currentPath.startsWith("/bookings"))
       return true;
@@ -30,13 +30,13 @@ export default function MobileNavigation() {
   // Generate navigation links
   const navLinks = [
     { label: "Home", path: "/", icon: Home },
-    { label: "Plans", path: "/packages", icon: Package },
+    { label: "Plans", path: "/plans", icon: Package },
     { label: "Bookings", path: "/bookings", icon: Clock },
     { label: "Profile", path: "/profile", icon: User },
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-border">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-border mobile-nav-safe" style={{ position: 'fixed' }}>
       <div className="flex items-center justify-around h-16">
         {navLinks.map((item) => (
           <Link
@@ -54,8 +54,14 @@ export default function MobileNavigation() {
         ))}
       </div>
 
-      {/* Safe area padding for iOS devices */}
-      <div className="h-safe-area-inset-bottom w-full bg-background" />
+      {/* Safe area padding for mobile devices */}
+      <div 
+        className="w-full bg-background"
+        style={{ 
+          height: 'env(safe-area-inset-bottom)',
+          minHeight: '0px'
+        }} 
+      />
     </nav>
   );
 }

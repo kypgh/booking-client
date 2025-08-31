@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import PaymentDialog from './PaymentDialog';
+import SubscriptionWarningDialog from '@/components/SubscriptionWarningDialog';
 import { CreditCard, Package, Crown } from 'lucide-react';
 import { ensureNumber, ensureString } from '@/lib/errorUtils';
+import { useActiveSubscriptions } from '@/hooks/useApi';
 
 interface PaymentButtonProps {
   itemType: 'package' | 'subscription';
@@ -30,10 +32,32 @@ const PaymentButton: React.FC<PaymentButtonProps> = ({
   children,
 }) => {
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
+  const [isWarningDialogOpen, setIsWarningDialogOpen] = useState(false);
+  
+  // Get active subscriptions to check if user already has one
+  const { data: activeSubscriptions } = useActiveSubscriptions();
 
   const handlePaymentSuccess = () => {
     setIsPaymentDialogOpen(false);
     onSuccess?.();
+  };
+
+  const handleButtonClick = () => {
+    // Check if this is a subscription purchase and user already has an active subscription
+    if (itemType === 'subscription' && activeSubscriptions && activeSubscriptions.length > 0) {
+      setIsWarningDialogOpen(true);
+    } else {
+      setIsPaymentDialogOpen(true);
+    }
+  };
+
+  const handleWarningConfirm = () => {
+    setIsWarningDialogOpen(false);
+    setIsPaymentDialogOpen(true);
+  };
+
+  const handleWarningCancel = () => {
+    setIsWarningDialogOpen(false);
   };
 
   const getDefaultButtonContent = () => {
@@ -47,6 +71,10 @@ const PaymentButton: React.FC<PaymentButtonProps> = ({
     );
   };
 
+  // Get current subscription name for warning dialog
+  const currentSubscriptionName = activeSubscriptions?.[0]?.subscriptionPlan?.name || 
+                                 (activeSubscriptions?.[0] as any)?.name;
+
   return (
     <>
       <Button
@@ -54,10 +82,18 @@ const PaymentButton: React.FC<PaymentButtonProps> = ({
         size={size}
         className={className}
         disabled={disabled}
-        onClick={() => setIsPaymentDialogOpen(true)}
+        onClick={handleButtonClick}
       >
         {children || getDefaultButtonContent()}
       </Button>
+
+      <SubscriptionWarningDialog
+        isOpen={isWarningDialogOpen}
+        onClose={handleWarningCancel}
+        onConfirm={handleWarningConfirm}
+        currentPlanName={currentSubscriptionName}
+        newPlanName={itemName}
+      />
 
       <PaymentDialog
         isOpen={isPaymentDialogOpen}

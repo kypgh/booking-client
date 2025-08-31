@@ -35,7 +35,7 @@ export default function PaymentSuccessPage() {
       setLoading(false);
       
       // Set a flag to indicate a purchase was just completed
-      // This will be detected by the packages page to auto-refresh
+      // This will be detected by the plans page to auto-refresh
       sessionStorage.setItem('justPurchased', 'true');
       
       // Refresh all plan-related data to ensure the user sees their new plan immediately
@@ -78,7 +78,7 @@ export default function PaymentSuccessPage() {
         title: 'Purchase Completed!',
         description: 'Your purchase was successful and your account has been updated.',
         actionText: 'View Your Plans',
-        actionUrl: '/packages'
+        actionUrl: '/plans'
       };
     }
 
@@ -156,7 +156,7 @@ export default function PaymentSuccessPage() {
               
               <Button 
                 variant="outline" 
-                onClick={() => router.push('/packages')} 
+                onClick={() => router.push('/plans')} 
                 className="w-full"
               >
                 View My Plans

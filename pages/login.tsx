@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import LoadingSpinner from "@/components/ui/loading-spinner";
-import { API_URL, APP_NAME, STRIPE_PUBLISHABLE_KEY } from "@/lib/envs";
+
 
 // Login form type definition
 type LoginFormData = {
@@ -183,16 +183,7 @@ export default function LoginPage() {
       </Head>
 
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
-        {/* DEBUG: Environment Variables - REMOVE AFTER TESTING */}
-        <div className="fixed top-2 left-2 right-2 bg-red-100 border border-red-400 rounded-lg p-2 text-xs z-50">
-          <div className="font-bold text-red-800 mb-1">🔧 DEBUG ENV (Remove after testing)</div>
-          <div className="space-y-1 text-red-700">
-            <div><strong>API:</strong> {API_URL}</div>
-            <div><strong>APP:</strong> {APP_NAME || 'NOT SET'}</div>
-            <div><strong>STRIPE:</strong> {STRIPE_PUBLISHABLE_KEY ? 'SET' : 'NOT SET'}</div>
-          </div>
-        </div>
-        
+
         <Card className="w-full max-w-md">
           <CardHeader className="space-y-1 text-center">
             <CardTitle className="text-2xl font-bold text-primary">

@@ -151,7 +151,7 @@ const BookSessionDialog: React.FC<BookSessionDialogProps> = ({
 
   const handlePurchasePlan = () => {
     onClose();
-    router.push("/packages");
+    router.push("/plans");
   };
 
   // Format session time for display

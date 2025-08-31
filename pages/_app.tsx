@@ -8,7 +8,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { Elements } from "@stripe/react-stripe-js";
 import getStripe from "@/lib/stripe";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { initializeMobile } from "@/lib/mobile";
 
 export default function App({ Component, pageProps }: AppProps) {
   // Create a new QueryClient instance for each session
@@ -17,13 +18,20 @@ export default function App({ Component, pageProps }: AppProps) {
       new QueryClient({
         defaultOptions: {
           queries: {
-            refetchOnWindowFocus: false,
-            staleTime: 5 * 60 * 1000, // 5 minutes
+            refetchOnWindowFocus: true, // Enable refetch when app regains focus
+            staleTime: 30 * 1000, // 30 seconds for most data
+            cacheTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
             retry: 1,
+            refetchOnMount: true, // Always refetch on mount
           },
         },
       })
   );
+
+  // Initialize mobile-specific features
+  useEffect(() => {
+    initializeMobile();
+  }, []);
 
   return (
     <Elements stripe={getStripe()}>

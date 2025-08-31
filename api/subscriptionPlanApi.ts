@@ -74,6 +74,34 @@ export interface Subscription {
   updatedAt?: string;
 }
 
+// PackageBookingData interface for memberships
+export interface PackageBookingData {
+  _id: string;
+  client: string;
+  package: {
+    _id: string;
+    name: string;
+    description: string;
+    credits: number;
+    validityDays: number;
+    price: number;
+    status: string;
+  };
+  brand: string;
+  initialCredits: number;
+  remainingCredits: number;
+  startDate: string;
+  expiryDate: string;
+  status: string;
+  payment: {
+    amount: number;
+    transactionId?: string;
+    status: string;
+    date: string;
+  };
+  sessionBookings: string[];
+}
+
 // Subscription Plan related API endpoints
 const SubscriptionPlanApi = {
   // Get all available subscription plans for a brand
@@ -165,6 +193,31 @@ const SubscriptionPlanApi = {
       return response;
     } catch (error) {
       console.error("Check subscription plan ownership error:", error);
+      throw error;
+    }
+  },
+
+  // Get client's subscriptions (legacy endpoint)
+  getClientSubscriptions: async (): Promise<ApiResponse<SubscriptionBooking[]>> => {
+    try {
+      const response = await agent.get("/subscription");
+      return response;
+    } catch (error) {
+      console.error("Get client subscriptions error:", error);
+      throw error;
+    }
+  },
+
+  // Get all client memberships for a brand
+  getClientMemberships: async (brandId: string): Promise<ApiResponse<{
+    packages: PackageBookingData[];
+    subscriptions: SubscriptionBooking[];
+  }>> => {
+    try {
+      const response = await agent.get(`/client/memberships?brandId=${brandId}`);
+      return response;
+    } catch (error) {
+      console.error("Get client memberships error:", error);
       throw error;
     }
   },

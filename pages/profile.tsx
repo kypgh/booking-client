@@ -134,24 +134,24 @@ export default function ProfilePage() {
         {/* Profile Header */}
         <Card>
           <CardContent className="p-6">
-            <div className="flex items-start justify-between">
-              <div className="flex items-start gap-4">
-                <Avatar className="h-20 w-20">
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+              <div className="flex items-start gap-4 flex-1 min-w-0">
+                <Avatar className="h-20 w-20 flex-shrink-0">
                   <AvatarImage src={profileData?.avatar} />
                   <AvatarFallback className="text-2xl bg-primary/10 text-primary">
                     {getUserInitials(profileData?.name)}
                   </AvatarFallback>
                 </Avatar>
                 
-                <div className="space-y-2">
-                  <h1 className="text-2xl font-bold">{profileData?.name || "User"}</h1>
+                <div className="space-y-2 flex-1 min-w-0">
+                  <h1 className="text-2xl font-bold truncate">{profileData?.name || "User"}</h1>
                   <div className="flex items-center gap-2 text-muted-foreground">
-                    <Mail className="h-4 w-4" />
-                    <span>{profileData?.email}</span>
+                    <Mail className="h-4 w-4 flex-shrink-0" />
+                    <span className="truncate">{profileData?.email}</span>
                   </div>
                   {profileData?.dateOfBirth && formatDate(profileData.dateOfBirth, "MMMM d, yyyy") && (
                     <div className="flex items-center gap-2 text-muted-foreground">
-                      <Calendar className="h-4 w-4" />
+                      <Calendar className="h-4 w-4 flex-shrink-0" />
                       <span>Born {formatDate(profileData.dateOfBirth, "MMMM d, yyyy")}</span>
                     </div>
                   )}
@@ -162,10 +162,11 @@ export default function ProfilePage() {
                 variant="destructive"
                 size="sm"
                 onClick={() => setIsLogoutDialogOpen(true)}
-                className="flex items-center gap-2"
+                className="flex items-center gap-2 flex-shrink-0 self-start"
               >
                 <LogOut className="h-4 w-4" />
-                Logout
+                <span className="hidden sm:inline">Logout</span>
+                <span className="sm:hidden">Log out</span>
               </Button>
             </div>
           </CardContent>

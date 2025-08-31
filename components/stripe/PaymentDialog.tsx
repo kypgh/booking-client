@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import LoadingSpinner from '@/components/ui/loading-spinner';
 import CheckoutForm from './CheckoutForm';
 import { useCreatePaymentIntent } from '@/hooks/useMutations';
-import { X, CreditCard, Package, Crown } from 'lucide-react';
+import { CreditCard, Package, Crown } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { getErrorMessage, ensureNumber, ensureString } from '@/lib/errorUtils';
 import { useBrand } from '@/contexts/BrandContext';
@@ -90,20 +90,10 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <div className="flex items-center justify-between">
-            <DialogTitle className="flex items-center">
-              <ItemIcon className="h-5 w-5 mr-2" />
-              Purchase {itemType === 'package' ? 'Package' : 'Plan'}
-            </DialogTitle>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={onClose}
-              className="h-6 w-6"
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
+          <DialogTitle className="flex items-center">
+            <ItemIcon className="h-5 w-5 mr-2" />
+            Purchase {itemType === 'package' ? 'Package' : 'Plan'}
+          </DialogTitle>
         </DialogHeader>
 
         <div className="py-4">
