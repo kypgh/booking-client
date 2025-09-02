@@ -228,7 +228,7 @@ main {
   
   /* Ensure mobile navigation doesn't overlap with system UI */
   .mobile-nav-safe {
-    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 16px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
     overscroll-behavior: contain;
     position: fixed !important;
     bottom: 0 !important;
@@ -252,18 +252,18 @@ main {
   }
 }
 
-/* Android-specific styles for better navigation bar handling */
+/* Android-specific styles - minimal padding since navigation bar will be hidden */
 @supports not (-webkit-touch-callout: none) {
   /* Android specific styles */
   .mobile-nav-safe {
-    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 24px) !important;
+    padding-bottom: env(safe-area-inset-bottom, 0px) !important;
   }
 }
 
 /* iOS specific styles */
 @supports (-webkit-touch-callout: none) {
   .mobile-nav-safe {
-    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 16px) !important;
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 8px) !important;
   }
 }
 

@@ -8,6 +8,7 @@ import { toast } from "react-hot-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { useBrand, Brand } from "@/contexts/BrandContext";
 import { getErrorMessage } from "@/lib/errorUtils";
+import { hideKeyboard } from "@/lib/mobile";
 
 // UI Components
 import { Button } from "@/components/ui/button";
@@ -53,6 +54,10 @@ export default function LoginPage() {
   // Form submission handler
   const onSubmit = async (data: LoginFormData) => {
     setIsLoading(true);
+    
+    // Hide keyboard when form is submitted
+    await hideKeyboard();
+    
     try {
       const response = await login(data.email, data.password);
 
@@ -98,6 +103,22 @@ export default function LoginPage() {
       setActiveBrandId(brandId);
       router.push("/");
     }
+  };
+
+  // Handle clicking outside form to hide keyboard
+  const handleContainerClick = async (e: React.MouseEvent) => {
+    // If clicking outside of input fields, hide keyboard
+    if (e.target === e.currentTarget) {
+      await hideKeyboard();
+    }
+  };
+
+  // Handle input blur to manage keyboard
+  const handleInputBlur = async () => {
+    // Small delay to allow form submission to work properly
+    setTimeout(async () => {
+      await hideKeyboard();
+    }, 100);
   };
 
   if (showBrandSelection)
@@ -182,7 +203,10 @@ export default function LoginPage() {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
 
-      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+      <div 
+        className="min-h-screen flex items-center justify-center bg-background p-4"
+        onClick={handleContainerClick}
+      >
 
         <Card className="w-full max-w-md">
           <CardHeader className="space-y-1 text-center">
@@ -209,6 +233,7 @@ export default function LoginPage() {
                       message: "Invalid email address",
                     },
                   })}
+                  onBlur={handleInputBlur}
                 />
                 {errors.email && (
                   <p className="text-destructive text-xs mt-1">
@@ -226,6 +251,7 @@ export default function LoginPage() {
                   {...register("password", {
                     required: "Password is required",
                   })}
+                  onBlur={handleInputBlur}
                 />
                 {errors.password && (
                   <p className="text-destructive text-xs mt-1">

@@ -18,6 +18,13 @@ const config: CapacitorConfig = {
       resize: 'body',
       style: 'dark',
       resizeOnFullScreen: true
+    },
+    App: {
+      android: {
+        // Partial immersive mode - hide navigation bar but keep status bar
+        immersive: true,
+        hideNavigationBar: true
+      }
     }
   }
 };
