@@ -13,6 +13,11 @@ const config: CapacitorConfig = {
       backgroundColor: '#ffffff',
       overlay: false,
       show: true
+    },
+    Keyboard: {
+      resize: 'body',
+      style: 'dark',
+      resizeOnFullScreen: true
     }
   }
 };

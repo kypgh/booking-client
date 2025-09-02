@@ -267,6 +267,23 @@ main {
   }
 }
 
+/* Keyboard handling styles */
+.keyboard-open {
+  /* Adjust body when keyboard is open */
+  overflow: hidden;
+}
+
+.keyboard-open .mobile-nav-safe {
+  /* Smooth transition when keyboard appears/disappears */
+  transition: transform 0.3s ease;
+}
+
+/* Ensure input fields are visible when keyboard is open */
+.keyboard-open input:focus,
+.keyboard-open textarea:focus {
+  scroll-margin-bottom: 200px;
+}
+
 .dark {
   --background: #0f172a;
   --foreground: #f1f5f9;
