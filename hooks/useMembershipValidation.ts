@@ -1,4 +1,5 @@
-import { useActivePackages, useActiveSubscriptions } from './useApi';
+import { useClientMemberships } from './useApi';
+import { useBrand } from '@/contexts/BrandContext';
 
 export interface MembershipStatus {
   hasActiveCredits: boolean;
@@ -17,12 +18,10 @@ export const useMembershipValidation = (): {
   isLoading: boolean;
   canBookSession: boolean;
 } => {
-  const { data: activePackages, isLoading: packagesLoading } = useActivePackages();
-  const { data: subscriptionBookings, isLoading: subscriptionsLoading } = useActiveSubscriptions();
+  const { activeBrandId } = useBrand();
+  const { data: memberships, isLoading } = useClientMemberships();
 
-  const isLoading = packagesLoading || subscriptionsLoading;
-
-  if (isLoading || !activePackages || !subscriptionBookings) {
+  if (isLoading || !memberships || !activeBrandId) {
     return {
       membershipStatus: null,
       isLoading,
@@ -30,33 +29,33 @@ export const useMembershipValidation = (): {
     };
   }
 
-  // Calculate membership status
-  const hasActiveCredits = activePackages.length > 0 && 
-    activePackages.some(pkg => pkg.remainingCredits > 0);
+  // Find membership for current brand
+  const currentBrandMembership = memberships.memberships?.find(m => m.brandId === activeBrandId);
   
-  const hasActiveSubscription = subscriptionBookings.length > 0 &&
-    subscriptionBookings.some(sub => {
-      // Handle old subscription format until server is updated
-      if (!sub.endDate) return sub.status === 'active'; // No end date means active
-      return sub.status === 'active' && new Date(sub.endDate) > new Date();
-    });
-
-  const totalCreditsRemaining = activePackages.reduce(
-    (total, pkg) => total + pkg.remainingCredits, 
-    0
-  );
+  if (!currentBrandMembership) {
+    return {
+      membershipStatus: {
+        hasActiveCredits: false,
+        hasActiveSubscription: false,
+        hasAnyActiveMembership: false,
+        activeCreditsCount: 0,
+        activeSubscriptionsCount: 0,
+        totalCreditsRemaining: 0,
+      },
+      isLoading: false,
+      canBookSession: false,
+    };
+  }
 
   const membershipStatus: MembershipStatus = {
-    hasActiveCredits,
-    hasActiveSubscription,
-    hasAnyActiveMembership: hasActiveCredits || hasActiveSubscription,
-    activeCreditsCount: activePackages.filter(pkg => pkg.remainingCredits > 0).length,
-    activeSubscriptionsCount: subscriptionBookings.filter(sub => {
-      // Handle old subscription format until server is updated
-      if (!sub.endDate) return sub.status === 'active';
-      return sub.status === 'active' && new Date(sub.endDate) > new Date();
-    }).length,
-    totalCreditsRemaining,
+    hasActiveCredits: currentBrandMembership.hasActivePackage,
+    hasActiveSubscription: currentBrandMembership.hasActiveSubscription,
+    hasAnyActiveMembership: currentBrandMembership.hasActiveMembership,
+    activeCreditsCount: currentBrandMembership.activeCreditPackages?.length || 0,
+    activeSubscriptionsCount: currentBrandMembership.activeSubscription ? 1 : 0,
+    totalCreditsRemaining: currentBrandMembership.activeCreditPackages?.reduce(
+      (total, pkg) => total + pkg.remainingCredits, 0
+    ) || 0,
   };
 
   return {
@@ -70,12 +69,10 @@ export const useMembershipValidation = (): {
  * Hook to get available membership options for booking
  */
 export const useAvailableMemberships = () => {
-  const { data: activePackages, isLoading: packagesLoading } = useActivePackages();
-  const { data: subscriptionBookings, isLoading: subscriptionsLoading } = useActiveSubscriptions();
+  const { activeBrandId } = useBrand();
+  const { data: memberships, isLoading } = useClientMemberships();
 
-  const isLoading = packagesLoading || subscriptionsLoading;
-
-  if (isLoading || !activePackages || !subscriptionBookings) {
+  if (isLoading || !memberships || !activeBrandId) {
     return {
       availableCredits: [],
       availableSubscriptions: [],
@@ -83,14 +80,24 @@ export const useAvailableMemberships = () => {
     };
   }
 
-  // Filter to only active/usable memberships
-  const availableCredits = activePackages.filter(pkg => pkg.remainingCredits > 0);
+  // Find membership for current brand
+  const currentBrandMembership = memberships.memberships?.find(m => m.brandId === activeBrandId);
   
-  const availableSubscriptions = subscriptionBookings.filter(sub => {
-    // Handle old subscription format until server is updated
-    if (!sub.endDate) return sub.status === 'active'; // No end date means active
-    return sub.status === 'active' && new Date(sub.endDate) > new Date();
-  });
+  if (!currentBrandMembership) {
+    return {
+      availableCredits: [],
+      availableSubscriptions: [],
+      isLoading: false,
+    };
+  }
+
+  // Return the actual detailed package and subscription data
+  const availableCredits = currentBrandMembership.activeCreditPackages?.filter(pkg => 
+    pkg.remainingCredits > 0 && pkg.status === 'active'
+  ) || [];
+  const availableSubscriptions = currentBrandMembership.activeSubscription && 
+    currentBrandMembership.activeSubscription.status === 'active' ? 
+    [currentBrandMembership.activeSubscription] : [];
 
   return {
     availableCredits,

@@ -109,7 +109,7 @@ const SubscriptionPlanApi = {
     brandId: string
   ): Promise<ApiResponse<SubscriptionPlan[]>> => {
     try {
-      const response = await agent.get(`/subscription-plan?brandId=${brandId}`);
+      const response = await agent.get(`/subscription/plans?brandId=${brandId}`);
       return response;
     } catch (error) {
       console.error("Get available subscription plans error:", error);
@@ -197,24 +197,59 @@ const SubscriptionPlanApi = {
     }
   },
 
-  // Get client's subscriptions (legacy endpoint)
-  getClientSubscriptions: async (): Promise<ApiResponse<SubscriptionBooking[]>> => {
-    try {
-      const response = await agent.get("/subscription");
-      return response;
-    } catch (error) {
-      console.error("Get client subscriptions error:", error);
-      throw error;
-    }
-  },
+
 
   // Get all client memberships for a brand
-  getClientMemberships: async (brandId: string): Promise<ApiResponse<{
-    packages: PackageBookingData[];
-    subscriptions: SubscriptionBooking[];
+  getClientMemberships: async (): Promise<ApiResponse<{
+    memberships: Array<{
+      brandId: string;
+      brandName: string;
+      brandLogo?: string;
+      hasActiveSubscription: boolean;
+      hasActivePackage: boolean;
+      hasActiveMembership: boolean;
+      activeSubscription?: {
+        id: string;
+        startDate: string;
+        endDate: string;
+        status: string;
+        plan: {
+          id: string;
+          name: string;
+          description: string;
+          price: number;
+          durationDays: number;
+          allowAllClasses: boolean;
+          frequencyLimit: {
+            count: number;
+            period: string;
+          };
+        };
+      };
+      activeCreditPackages?: Array<{
+        id: string;
+        startDate: string;
+        endDate: string;
+        status: string;
+        initialCredits: number;
+        remainingCredits: number;
+        plan: {
+          id: string;
+          name: string;
+          description: string;
+          price: number;
+          credits: number;
+          validityDays: number;
+          restrictions?: {
+            classes: string[];
+          };
+        };
+      }>;
+    }>;
+    hasActiveMembership: boolean;
   }>> => {
     try {
-      const response = await agent.get(`/client/memberships?brandId=${brandId}`);
+      const response = await agent.get(`/client/memberships`);
       return response;
     } catch (error) {
       console.error("Get client memberships error:", error);

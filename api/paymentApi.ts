@@ -21,14 +21,26 @@ interface CreatePackagePaymentRequest {
 
 interface CreateSubscriptionPaymentRequest {
   type: "subscription"; 
-  planId: string;
-  brandId?: string;
+  itemId: string;
+  brandId: string;
 }
 
 interface CreatePaymentIntentResponse {
   clientSecret: string;
   amount: number;
   itemName: string;
+}
+
+// Unified checkout request types based on new API spec
+interface UnifiedCheckoutRequest {
+  type: "subscription" | "package";
+  itemId: string;
+  brandId?: string;
+}
+
+interface UnifiedCheckoutResponse {
+  sessionId: string;
+  checkoutUrl: string;
 }
 
 // Payment related API endpoints
@@ -78,6 +90,37 @@ const PaymentApi = {
       throw error;
     }
   },
+
+  // Unified checkout for both subscriptions and packages
+  createCheckout: async (
+    checkoutData: UnifiedCheckoutRequest
+  ): Promise<ApiResponse<UnifiedCheckoutResponse>> => {
+    try {
+      let requestBody: any;
+      
+      if (checkoutData.type === "subscription") {
+        // For subscriptions, include brandId
+        requestBody = {
+          type: "subscription",
+          itemId: checkoutData.itemId,
+          brandId: checkoutData.brandId
+        };
+      } else {
+        // For packages (credits)
+        requestBody = {
+          type: "package",
+          itemId: checkoutData.itemId
+        };
+      }
+      
+      console.log("Creating unified checkout:", requestBody);
+      const response = await agent.post("/payment/checkout", requestBody);
+      return response;
+    } catch (error) {
+      console.error("Create checkout error:", error);
+      throw error;
+    }
+  },
 };
 
 export default PaymentApi;
@@ -85,5 +128,7 @@ export type {
   CreatePaymentIntentRequest, 
   CreatePaymentIntentResponse,
   CreatePackagePaymentRequest,
-  CreateSubscriptionPaymentRequest 
+  CreateSubscriptionPaymentRequest,
+  UnifiedCheckoutRequest,
+  UnifiedCheckoutResponse
 };

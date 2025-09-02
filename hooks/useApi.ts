@@ -338,20 +338,14 @@ export const usePackageBookings = (packageBookingId: string) => {
   });
 };
 
-// Hook to get all subscriptions (using old API until server is updated) - DEPRECATED
-// Use useClientSubscriptions instead
+// Hook to get all subscriptions (DEPRECATED - DISABLED due to CORS issues)
+// Use useClientMemberships instead
 export const useSubscriptions = () => {
-  const authCheck = useAuthCheck();
-  const { activeBrandId } = useBrand();
-
-  return useQuery({
-    queryKey: ["subscriptions", activeBrandId],
-    queryFn: async () => {
-      const response = await PackagesApi.getSubscriptions();
-      return response.data;
-    },
-    ...authCheck,
-  });
+  return {
+    data: [],
+    isLoading: false,
+    error: null,
+  };
 };
 
 export const useVerifyInvitation = (token: string, enabled = true) => {
@@ -410,38 +404,30 @@ export const useAvailablePackages = (brandId: string) => {
   });
 };
 
-// Hook to get subscription plans for a brand (temporarily using old API until server is updated)
+// Hook to get subscription plans for a brand using the new API
 export const useSubscriptionPlans = (brandId: string) => {
   const authCheck = useAuthCheck();
 
   return useQuery({
     queryKey: ["subscriptionPlans", brandId],
     queryFn: async () => {
-      // Temporarily use old endpoint until server is updated with new structure
-      const response = await PackagesApi.getSubscriptionPlans(brandId);
+      const response = await SubscriptionPlanApi.getAvailableSubscriptionPlans(brandId);
       
-      // Transform SubscriptionData[] to SubscriptionPlan[] format
-      return response.data.map((sub: any) => ({
-          _id: sub._id || sub.id, // Use _id if available, fallback to id
-          name: sub.name,
-          description: sub.description,
-          brand: sub.brand || brandId,
-          price: sub.price,
-          status: "active" as const,
-          durationDays: 30, // Default for monthly plans
-          frequencyLimit: {
-            count: sub.includedClasses?.length || 999,
-            period: "month" as const
-          },
-          allowAllClasses: sub.includedClasses?.length === 0 || !sub.includedClasses,
-          includedClasses: (sub.includedClasses || []).map((cls: any) => ({
-            id: cls.id || cls,
-            name: cls.name || `Class ${cls.id || cls}`,
-            description: cls.description
-          })), // Add includedClasses property
-          restrictions: sub.includedClasses?.length > 0 ? {
-            classes: sub.includedClasses.map((cls: any) => cls.id || cls)
-          } : undefined
+      // Transform the response to match the expected format
+      return response.data.map((plan: any) => ({
+        _id: plan.id,
+        name: plan.name,
+        description: plan.description,
+        brand: brandId,
+        price: plan.price,
+        status: "active" as const,
+        durationDays: plan.durationDays,
+        frequencyLimit: plan.frequencyLimit,
+        allowAllClasses: plan.allowAllClasses,
+        includedClasses: plan.includedClasses || [],
+        restrictions: plan.allowAllClasses ? undefined : {
+          classes: (plan.includedClasses || []).map((cls: any) => cls.id)
+        }
       }));
     },
     enabled: !!brandId && authCheck.enabled,
@@ -556,71 +542,24 @@ export const useSubscriptionOwnership = (planId: string) => {
   });
 };
 
-// Hook to get owned subscription plan IDs (temporarily using old API until server is updated) - DEPRECATED
+// Hook to get owned subscription plan IDs (DEPRECATED - DISABLED due to CORS issues)
 // Use useClientMemberships instead
 export const useOwnedSubscriptions = () => {
-  const authCheck = useAuthCheck();
-  const { activeBrandId } = useBrand();
-
-  return useQuery({
-    queryKey: ["subscriptions", "owned", activeBrandId],
-    queryFn: async () => {
-      try {
-        const response = await PackagesApi.getSubscriptions();
-
-        // Safety check
-        if (!response.data || !Array.isArray(response.data)) {
-          console.warn(
-            "Unexpected response format from getSubscriptions",
-            response
-          );
-          return [];
-        }
-
-        // Extract plan IDs from active subscriptions - need to get the plan ID from subscriptionPlan object
-        const planIds = response.data
-          .filter((sub: any) => sub.status === "active")
-          .map((sub: any) => {
-            // The subscription booking contains a subscriptionPlan object with the actual plan ID
-            if (sub.subscriptionPlan?._id) return sub.subscriptionPlan._id;
-            if (sub.subscriptionPlan?.id) return sub.subscriptionPlan.id;
-            // Fallback to other possible formats
-            if (sub.planId) return sub.planId;
-            if (sub.id) return sub.id;
-            return sub._id || "";
-          })
-          .filter(Boolean); // Remove empty strings
-
-        // console.log("useOwnedSubscriptions:", planIds); // Uncomment for debugging
-        return planIds;
-      } catch (error) {
-        console.error("Error in useOwnedSubscriptions:", error);
-        return [];
-      }
-    },
-    staleTime: 60 * 1000, // 60 seconds - reduce frequency
-    refetchInterval: false, // Disable auto-refetch - user can manually refresh
-    ...authCheck,
-  });
+  return {
+    data: [],
+    isLoading: false,
+    error: null,
+  };
 };
 
-// Hook to get active subscription bookings (temporarily using old API until server is updated) - DEPRECATED
+// Hook to get active subscription bookings (DEPRECATED - DISABLED due to CORS issues)
 // Use useClientMemberships instead
 export const useActiveSubscriptions = () => {
-  const authCheck = useAuthCheck();
-  const { activeBrandId } = useBrand();
-
-  return useQuery({
-    queryKey: ["subscriptionBookings", "active", activeBrandId],
-    queryFn: async () => {
-      // Temporarily use old endpoint until server is updated with new structure
-      const response = await PackagesApi.getSubscriptions();
-      return response.data.filter((sub: any) => sub.status === "active");
-    },
-    staleTime: 60 * 1000, // 60 seconds - reduce frequency
-    refetchInterval: false, // Disable auto-refetch - user can manually refresh
-    ...authCheck,
-  });
+  return {
+    data: [],
+    isLoading: false,
+    error: null,
+  };
 };
 
 // Hook to get subscription booking history
@@ -638,15 +577,14 @@ export const useSubscriptionBookingHistory = () => {
   });
 };
 
-// Hook to get client's subscriptions (legacy endpoint)
-export const useClientSubscriptions = () => {
+// Hook to get all client memberships (new unified API)
+export const useClientMemberships = () => {
   const authCheck = useAuthCheck();
-  const { activeBrandId } = useBrand();
 
   return useQuery({
-    queryKey: ["subscriptions", "client", activeBrandId],
+    queryKey: ["memberships", "client"],
     queryFn: async () => {
-      const response = await SubscriptionPlanApi.getClientSubscriptions();
+      const response = await SubscriptionPlanApi.getClientMemberships();
       return response.data;
     },
     staleTime: 60 * 1000, // 60 seconds
@@ -655,21 +593,7 @@ export const useClientSubscriptions = () => {
   });
 };
 
-// Hook to get all client memberships for a brand
-export const useClientMemberships = (brandId: string) => {
-  const authCheck = useAuthCheck();
 
-  return useQuery({
-    queryKey: ["memberships", "client", brandId],
-    queryFn: async () => {
-      const response = await SubscriptionPlanApi.getClientMemberships(brandId);
-      return response.data;
-    },
-    staleTime: 60 * 1000, // 60 seconds
-    refetchInterval: false, // Disable auto-refetch - user can manually refresh
-    enabled: !!brandId && authCheck.enabled,
-  });
-};
 
 // Custom hook to refresh all plan-related data
 export const useRefreshPlans = () => {
@@ -678,14 +602,14 @@ export const useRefreshPlans = () => {
 
   const refreshAllPlans = () => {
     // Invalidate all plan-related queries
-    queryClient.invalidateQueries({ queryKey: ["packages", "active", activeBrandId] });
-    queryClient.invalidateQueries({ queryKey: ["subscriptions", "active", activeBrandId] });
+    queryClient.invalidateQueries({ queryKey: ["packages", "available", activeBrandId] });
+    queryClient.invalidateQueries({ queryKey: ["subscriptionPlans", activeBrandId] });
+    queryClient.invalidateQueries({ queryKey: ["memberships", "client"] });
+    
+    // Legacy queries for backward compatibility (but avoid the CORS problematic endpoints)
     queryClient.invalidateQueries({ queryKey: ["subscriptionBookings", "active", activeBrandId] });
     queryClient.invalidateQueries({ queryKey: ["packages", "owned"] });
     queryClient.invalidateQueries({ queryKey: ["subscriptions", "owned", activeBrandId] });
-    queryClient.invalidateQueries({ queryKey: ["subscriptionPlans", activeBrandId] });
-    queryClient.invalidateQueries({ queryKey: ["subscriptions", "client", activeBrandId] });
-    queryClient.invalidateQueries({ queryKey: ["memberships", "client", activeBrandId] });
     
     // Also invalidate ownership queries for all packages and subscriptions
     queryClient.invalidateQueries({ queryKey: ["packages", "ownership"] });

@@ -4,7 +4,8 @@ import PaymentDialog from './PaymentDialog';
 import SubscriptionWarningDialog from '@/components/SubscriptionWarningDialog';
 import { CreditCard, Package, Crown } from 'lucide-react';
 import { ensureNumber, ensureString } from '@/lib/errorUtils';
-import { useActiveSubscriptions } from '@/hooks/useApi';
+import { useClientMemberships } from '@/hooks/useApi';
+import { useBrand } from '@/contexts/BrandContext';
 
 interface PaymentButtonProps {
   itemType: 'package' | 'subscription';
@@ -33,9 +34,10 @@ const PaymentButton: React.FC<PaymentButtonProps> = ({
 }) => {
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
   const [isWarningDialogOpen, setIsWarningDialogOpen] = useState(false);
+  const { activeBrandId } = useBrand();
   
-  // Get active subscriptions to check if user already has one
-  const { data: activeSubscriptions } = useActiveSubscriptions();
+  // Get unified membership data to check if user already has active subscription
+  const { data: memberships } = useClientMemberships();
 
   const handlePaymentSuccess = () => {
     setIsPaymentDialogOpen(false);
@@ -44,7 +46,10 @@ const PaymentButton: React.FC<PaymentButtonProps> = ({
 
   const handleButtonClick = () => {
     // Check if this is a subscription purchase and user already has an active subscription
-    if (itemType === 'subscription' && activeSubscriptions && activeSubscriptions.length > 0) {
+    const currentBrandMembership = memberships?.memberships?.find(m => m.brandId === activeBrandId);
+    const hasActiveSubscription = currentBrandMembership?.hasActiveSubscription || false;
+    
+    if (itemType === 'subscription' && hasActiveSubscription) {
       setIsWarningDialogOpen(true);
     } else {
       setIsPaymentDialogOpen(true);
@@ -72,8 +77,8 @@ const PaymentButton: React.FC<PaymentButtonProps> = ({
   };
 
   // Get current subscription name for warning dialog
-  const currentSubscriptionName = activeSubscriptions?.[0]?.subscriptionPlan?.name || 
-                                 (activeSubscriptions?.[0] as any)?.name;
+  const currentBrandMembership = memberships?.memberships?.find(m => m.brandId === activeBrandId);
+  const currentSubscriptionName = currentBrandMembership?.activeSubscription?.plan.name || 'Current Subscription';
 
   return (
     <>

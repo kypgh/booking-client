@@ -214,7 +214,7 @@ export default function UnifiedDashboard({ className = "" }: UnifiedDashboardPro
           </Button>
         </div>
 
-        <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4">
+        <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 custom-scrollbar">
           {/* All Classes Option */}
           <Button
             key="all"

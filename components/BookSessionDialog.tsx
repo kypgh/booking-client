@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import { format } from "date-fns";
 import { useAuth } from "@/contexts/AuthContext";
-import { useActivePackages, useSubscriptions, useAvailablePackages, useSubscriptionPlans } from "@/hooks/useApi";
+import { useAvailablePackages, useSubscriptionPlans, useClientMemberships } from "@/hooks/useApi";
 import { useCreateBookingWithBrand } from "@/hooks/useMutations";
 import { getErrorMessage } from "@/lib/errorUtils";
 import { toast } from "react-hot-toast";
@@ -66,11 +66,8 @@ const BookSessionDialog: React.FC<BookSessionDialogProps> = ({
   const { activeBrandId } = useBrand();
   const router = useRouter();
 
-  // Get active packages for the user
-  const { data: packages, isLoading: packagesLoading } = useActivePackages();
-
-  // Get active subscriptions for the user
-  const { data: subscriptions, isLoading: subscriptionsLoading } = useSubscriptions();
+  // Get unified membership data instead of separate calls
+  const { data: memberships, isLoading: membershipsLoading } = useClientMemberships();
 
   // Get available packages for purchase
   const { data: availablePackages, isLoading: availablePackagesLoading } = useAvailablePackages(activeBrandId as string);
@@ -98,7 +95,7 @@ const BookSessionDialog: React.FC<BookSessionDialogProps> = ({
   // Handle package/subscription selection when booking method changes
   useEffect(() => {
     if (bookingMethod === "credits" && availableCredits && availableCredits.length > 0) {
-      setSelectedPackage(availableCredits[0]._id);
+      setSelectedPackage(availableCredits[0].id);
     } else {
       setSelectedPackage("");
     }
@@ -163,7 +160,7 @@ const BookSessionDialog: React.FC<BookSessionDialogProps> = ({
   const hasActivePlan = canBookSession;
 
   // Loading state
-  const isLoading = packagesLoading || subscriptionsLoading || availablePackagesLoading || subscriptionPlansLoading;
+  const isLoading = membershipsLoading || availablePackagesLoading || subscriptionPlansLoading;
 
   if (isLoading) {
     return (
@@ -248,12 +245,12 @@ const BookSessionDialog: React.FC<BookSessionDialogProps> = ({
                   >
                     {availableCredits.map((pkg) => (
                       <label
-                        key={pkg._id}
+                        key={pkg.id}
                         className="flex items-center space-x-2 border rounded-md p-3 cursor-pointer"
                       >
-                        <RadioGroupItem value={pkg._id} id={pkg._id} />
+                        <RadioGroupItem value={pkg.id} id={pkg.id} />
                         <div>
-                          <span className="font-medium">{pkg.package.name}</span>
+                          <span className="font-medium">{pkg.plan.name}</span>
                           <div className="text-sm text-muted-foreground">
                             {pkg.remainingCredits} credits remaining
                           </div>
@@ -280,7 +277,7 @@ const BookSessionDialog: React.FC<BookSessionDialogProps> = ({
                       >
                         <RadioGroupItem value={sub.id} id={sub.id} />
                         <div>
-                          <span className="font-medium">{sub.name}</span>
+                          <span className="font-medium">{sub.plan.name}</span>
                           <div className="text-sm text-muted-foreground">
                             {sub.endDate ? `Expires ${new Date(sub.endDate).toLocaleDateString()}` : 'Active subscription'}
                           </div>

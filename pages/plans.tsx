@@ -40,40 +40,19 @@ export default function PlansPage() {
   // Fetch data with consolidated loading state
   const { data: packages, isLoading: packagesLoading } = useAvailablePackages(activeBrandId as string);
   const { data: subscriptionPlans, isLoading: subscriptionPlansLoading } = useSubscriptionPlans(activeBrandId as string);
-  const { data: memberships, isLoading: membershipsLoading } = useClientMemberships(activeBrandId as string);
+  const { data: memberships, isLoading: membershipsLoading } = useClientMemberships();
 
   // Consolidated loading state
   const isLoading = packagesLoading || subscriptionPlansLoading || membershipsLoading;
 
-  // Debug logging to understand data structure
-  useEffect(() => {
-    console.log("=== PLANS PAGE DEBUG ===");
-    console.log("memberships:", memberships);
-    console.log("packages:", packages);
-    console.log("subscriptionPlans:", subscriptionPlans);
-    console.log("hasActiveMemberships():", hasActiveMemberships());
-    
-    if (memberships) {
-      console.log("Active packages:", memberships.packages?.filter(p => p.status === 'active'));
-      console.log("Active subscriptions:", memberships.subscriptions?.filter(s => s.status === 'active'));
-    }
-    
-    console.log("===========================");
-  }, [memberships, packages, subscriptionPlans]);
 
-  // Disable auto-refresh to prevent excessive requests - user can manually refresh
-  // const { refresh: refreshPlansData } = useAutoRefresh({
-  //   ...REFRESH_CONFIGS.PLANS,
-  //   enabled: false, // Disabled to prevent excessive requests
-  // });
+
+
 
   // Check if user just completed a purchase
   useEffect(() => {
     const justPurchased = sessionStorage.getItem('justPurchased');
     if (justPurchased === 'true') {
-      console.log("=== PURCHASE DETECTED ===");
-      console.log("Refreshing all plan data...");
-      
       // Clear the flag
       sessionStorage.removeItem('justPurchased');
       
@@ -81,7 +60,6 @@ export default function PlansPage() {
       refreshAllPlans();
       
       toast.success('Your purchase has been processed! Your plan is now active.');
-      console.log("=========================");
     }
   }, [refreshAllPlans]);
 
@@ -96,13 +74,13 @@ export default function PlansPage() {
     }
   };
 
-  // Purchase logic removed - using Stripe payment flow directly
-
   const hasActiveMemberships = () => {
-    if (!memberships) return false;
-    const activePackages = memberships.packages?.filter(p => p.status === 'active') || [];
-    const activeSubscriptions = memberships.subscriptions?.filter(s => s.status === 'active') || [];
-    return activePackages.length > 0 || activeSubscriptions.length > 0;
+    if (!memberships || !activeBrandId) return false;
+    
+    // Find membership for the current brand
+    const currentBrandMembership = memberships.memberships?.find(m => m.brandId === activeBrandId);
+    
+    return currentBrandMembership?.hasActiveMembership || false;
   };
 
   if (isLoading) {
@@ -129,10 +107,18 @@ export default function PlansPage() {
               <Crown className="h-5 w-5 text-primary" />
               <h2 className="text-xl font-semibold">My Plans</h2>
               <span className="text-sm text-muted-foreground">
-                ({hasActiveMemberships() ? 
-                  `${(memberships?.packages?.filter(p => p.status === 'active')?.length || 0) + (memberships?.subscriptions?.filter(s => s.status === 'active')?.length || 0)} active` : 
-                  'No active plans'
-                })
+                ({(() => {
+                  if (!hasActiveMemberships()) return 'No active plans';
+                  
+                  const currentBrandMembership = memberships?.memberships?.find(m => m.brandId === activeBrandId);
+                  if (!currentBrandMembership) return 'No active plans';
+                  
+                  const subscriptionCount = currentBrandMembership.activeSubscription ? 1 : 0;
+                  const packageCount = currentBrandMembership.activeCreditPackages?.length || 0;
+                  const totalCount = subscriptionCount + packageCount;
+                  
+                  return `${totalCount} active plan${totalCount !== 1 ? 's' : ''}`;
+                })()})
               </span>
             </div>
             <div className="flex items-center gap-2">
@@ -156,41 +142,54 @@ export default function PlansPage() {
           
           <div className={`transition-all duration-300 ease-in-out ${
             isMyPlansExpanded 
-              ? 'max-h-[1000px] opacity-100' 
+              ? 'max-h-[800px] opacity-100' 
               : 'max-h-0 opacity-0'
           } overflow-hidden`}>
-            <div className="p-4 space-y-4">
+            <div className="p-4 space-y-4 max-h-[800px] overflow-y-auto custom-scrollbar">
               {isLoading ? (
                 <CardSkeleton />
               ) : hasActiveMemberships() ? (
                 <>
-                  {/* Show active packages */}
-                  {memberships?.packages?.filter(p => p.status === 'active').map((pkg, index) => (
-                    <CurrentPlanCard 
-                      key={pkg._id}
-                      plan={pkg} 
-                      type="package" 
-                    />
-                  ))}
-                  
-                  {/* Show active subscriptions */}
-                  {memberships?.subscriptions?.filter(s => s.status === 'active').map((sub, index) => (
-                    <CurrentPlanCard 
-                      key={sub._id}
-                      plan={sub} 
-                      type="subscription" 
-                    />
-                  ))}
-                  
-                  {/* Debug: Show raw data if no plans are displayed */}
-                  {!hasActiveMemberships() && memberships && (
-                    <div className="p-4 border border-yellow-200 bg-yellow-50 rounded-lg">
-                      <h4 className="font-medium text-yellow-800 mb-2">Debug: Data Found but Not Displayed</h4>
-                      <div className="text-sm text-yellow-700 space-y-1">
-                        <div>Memberships: {JSON.stringify(memberships)}</div>
+                  {(() => {
+                    const currentBrandMembership = memberships?.memberships?.find(m => m.brandId === activeBrandId);
+                    if (!currentBrandMembership) return null;
+                    
+                    return (
+                      <div className="space-y-4">
+                        {/* Show active subscription */}
+                        {currentBrandMembership.activeSubscription && (
+                          <CurrentPlanCard 
+                            key={currentBrandMembership.activeSubscription.id}
+                            plan={{
+                              _id: currentBrandMembership.activeSubscription.id,
+                              subscriptionPlan: currentBrandMembership.activeSubscription.plan,
+                              startDate: currentBrandMembership.activeSubscription.startDate,
+                              endDate: currentBrandMembership.activeSubscription.endDate,
+                              status: currentBrandMembership.activeSubscription.status,
+                            }}
+                            type="subscription" 
+                          />
+                        )}
+                        
+                        {/* Show active credit packages */}
+                        {currentBrandMembership.activeCreditPackages?.map((creditPackage) => (
+                          <CurrentPlanCard 
+                            key={creditPackage.id}
+                            plan={{
+                              _id: creditPackage.id,
+                              package: creditPackage.plan,
+                              initialCredits: creditPackage.initialCredits,
+                              remainingCredits: creditPackage.remainingCredits,
+                              startDate: creditPackage.startDate,
+                              expiryDate: creditPackage.endDate,
+                              status: creditPackage.status,
+                            }}
+                            type="package" 
+                          />
+                        ))}
                       </div>
-                    </div>
-                  )}
+                    );
+                  })()}
                 </>
               ) : (
                 <div className="p-6 border border-dashed border-border rounded-lg text-center">
@@ -235,8 +234,10 @@ export default function PlansPage() {
                 
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 items-stretch">
                   {packages.map((pkg) => {
-                    const isOwned = memberships?.packages?.some(mp => 
-                      mp.package._id === pkg._id && mp.status === 'active'
+                    // Check if user owns this specific package
+                    const currentBrandMembership = memberships?.memberships?.find(m => m.brandId === activeBrandId);
+                    const isOwned = currentBrandMembership?.activeCreditPackages?.some(
+                      creditPkg => creditPkg.plan.id === pkg._id
                     ) || false;
                     
                     return (
@@ -271,17 +272,12 @@ export default function PlansPage() {
                   <h3 className="text-lg font-semibold">Subscription Plans</h3>
                 </div>
                 
-
-                
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 items-stretch">
                   {subscriptionPlans.map((plan) => {
                     const planId = plan._id;
-                    const isOwned = memberships?.subscriptions?.some(ms => {
-                      const subPlan = typeof ms.subscriptionPlan === 'string' 
-                        ? ms.subscriptionPlan 
-                        : ms.subscriptionPlan?._id;
-                      return subPlan === planId && ms.status === 'active';
-                    }) || false;
+                    // Check if user owns this specific subscription plan
+                    const currentBrandMembership = memberships?.memberships?.find(m => m.brandId === activeBrandId);
+                    const isOwned = currentBrandMembership?.activeSubscription?.plan.id === planId || false;
                     
                     return (
                       <ModernPlanCard
@@ -310,10 +306,7 @@ export default function PlansPage() {
           </div>
         </div>
 
-
       </div>
-
-      {/* Purchase dialog removed - using Stripe payment flow */}
     </BrandLayout>
   );
 }

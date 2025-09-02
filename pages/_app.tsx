@@ -20,7 +20,7 @@ export default function App({ Component, pageProps }: AppProps) {
           queries: {
             refetchOnWindowFocus: true, // Enable refetch when app regains focus
             staleTime: 30 * 1000, // 30 seconds for most data
-            cacheTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
+            gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
             retry: 1,
             refetchOnMount: true, // Always refetch on mount
           },

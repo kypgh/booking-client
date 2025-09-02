@@ -1,6 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { Elements } from '@stripe/react-stripe-js';
-import getStripe from '@/lib/stripe';
 import {
   Dialog,
   DialogContent,
@@ -9,8 +7,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import LoadingSpinner from '@/components/ui/loading-spinner';
-import CheckoutForm from './CheckoutForm';
-import { useCreatePaymentIntent } from '@/hooks/useMutations';
+import { useCreateCheckout } from '@/hooks/useMutations';
 import { CreditCard, Package, Crown } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { getErrorMessage, ensureNumber, ensureString } from '@/lib/errorUtils';
@@ -35,22 +32,20 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({
   itemName,
   itemPrice,
 }) => {
-  const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [paymentInitiated, setPaymentInitiated] = useState(false);
-  const { mutate: createPaymentIntent, isPending: isCreatingIntent } = useCreatePaymentIntent();
+  const { mutate: createCheckout, isPending: isCreatingCheckout } = useCreateCheckout();
   const { activeBrandId } = useBrand();
 
   // Reset state when dialog closes
   useEffect(() => {
     if (!isOpen) {
-      setClientSecret(null);
       setPaymentInitiated(false);
     }
   }, [isOpen]);
 
   const handleInitiatePayment = () => {
     setPaymentInitiated(true);
-    createPaymentIntent(
+    createCheckout(
       {
         type: itemType,
         itemId: itemId,
@@ -58,11 +53,12 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({
       },
       {
         onSuccess: (data) => {
-          setClientSecret(data.clientSecret);
+          // Redirect to Stripe Checkout
+          window.location.href = data.checkoutUrl;
         },
         onError: (error: any) => {
-          console.error('Payment intent creation error:', error);
-          const errorMessage = getErrorMessage(error) || 'Failed to initiate payment';
+          console.error('Checkout creation error:', error);
+          const errorMessage = getErrorMessage(error) || 'Failed to initiate checkout';
           toast.error(errorMessage);
           setPaymentInitiated(false);
         },
@@ -119,19 +115,19 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({
               <div className="space-y-3">
                 <Button
                   onClick={handleInitiatePayment}
-                  disabled={isCreatingIntent}
+                  disabled={isCreatingCheckout}
                   className="w-full"
                   size="lg"
                 >
-                  {isCreatingIntent ? (
+                  {isCreatingCheckout ? (
                     <>
                       <LoadingSpinner size="sm" className="mr-2" />
-                      Setting up payment...
+                      Setting up checkout...
                     </>
                   ) : (
                     <>
                       <CreditCard className="h-4 w-4 mr-2" />
-                      Proceed to Payment
+                      Proceed to Checkout
                     </>
                   )}
                 </Button>
@@ -140,39 +136,18 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({
                   variant="outline"
                   onClick={onClose}
                   className="w-full"
-                  disabled={isCreatingIntent}
+                  disabled={isCreatingCheckout}
                 >
                   Cancel
                 </Button>
               </div>
             </div>
-          ) : clientSecret ? (
-            // Stripe checkout form
-            <Elements
-              stripe={getStripe()}
-              options={{
-                clientSecret,
-                appearance: {
-                  theme: 'stripe',
-                  variables: {
-                    colorPrimary: 'hsl(var(--primary))',
-                  },
-                },
-              }}
-            >
-              <CheckoutForm
-                onSuccess={handlePaymentSuccess}
-                onError={handlePaymentError}
-                itemName={itemName}
-                amount={itemPrice}
-              />
-            </Elements>
           ) : (
-            // Loading state while creating payment intent
+            // Loading state while redirecting to checkout
             <div className="flex flex-col items-center justify-center py-8">
               <LoadingSpinner size="lg" className="mb-4" />
               <p className="text-sm text-muted-foreground">
-                Setting up secure payment...
+                Redirecting to secure checkout...
               </p>
             </div>
           )}

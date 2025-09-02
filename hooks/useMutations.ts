@@ -311,3 +311,13 @@ export const useCreatePaymentIntent = () => {
     },
   });
 };
+
+// Unified Checkout Mutation (new API)
+export const useCreateCheckout = () => {
+  return useMutation({
+    mutationFn: async (data: { type: "subscription" | "package"; itemId: string; brandId?: string }) => {
+      const response = await PaymentApi.createCheckout(data);
+      return response.data;
+    },
+  });
+};
